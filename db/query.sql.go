@@ -11,8 +11,9 @@ import (
 	"time"
 )
 
-const createProject = `-- name: CreateProject :exec
+const createProject = `-- name: CreateProject :one
 insert into project(id, name, description, deadline) values (?, ?, ?, ?)
+returning id
 `
 
 type CreateProjectParams struct {
@@ -22,18 +23,21 @@ type CreateProjectParams struct {
 	Deadline    time.Time
 }
 
-func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) error {
-	_, err := q.db.ExecContext(ctx, createProject,
+func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createProject,
 		arg.ID,
 		arg.Name,
 		arg.Description,
 		arg.Deadline,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
-const createProjectTask = `-- name: CreateProjectTask :exec
+const createProjectTask = `-- name: CreateProjectTask :one
 insert into project_task(id, project_id, name, description, size, challenge) values (?, ?, ?, ?, ?, ?)
+returning id
 `
 
 type CreateProjectTaskParams struct {
@@ -45,8 +49,8 @@ type CreateProjectTaskParams struct {
 	Challenge   int64
 }
 
-func (q *Queries) CreateProjectTask(ctx context.Context, arg CreateProjectTaskParams) error {
-	_, err := q.db.ExecContext(ctx, createProjectTask,
+func (q *Queries) CreateProjectTask(ctx context.Context, arg CreateProjectTaskParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createProjectTask,
 		arg.ID,
 		arg.ProjectID,
 		arg.Name,
@@ -54,11 +58,14 @@ func (q *Queries) CreateProjectTask(ctx context.Context, arg CreateProjectTaskPa
 		arg.Size,
 		arg.Challenge,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
-const createQuota = `-- name: CreateQuota :exec
+const createQuota = `-- name: CreateQuota :one
 insert into quota(id, fixed_time, duration, recurrence_interval) values (?, ?, ?, ?)
+returning id
 `
 
 type CreateQuotaParams struct {
@@ -68,18 +75,21 @@ type CreateQuotaParams struct {
 	RecurrenceInterval int64
 }
 
-func (q *Queries) CreateQuota(ctx context.Context, arg CreateQuotaParams) error {
-	_, err := q.db.ExecContext(ctx, createQuota,
+func (q *Queries) CreateQuota(ctx context.Context, arg CreateQuotaParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createQuota,
 		arg.ID,
 		arg.FixedTime,
 		arg.Duration,
 		arg.RecurrenceInterval,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
-const createTask = `-- name: CreateTask :exec
+const createTask = `-- name: CreateTask :one
 insert into task(id, name, description, deadline, size, challenge) values (?, ?, ?, ?, ?, ?)
+returning id
 `
 
 type CreateTaskParams struct {
@@ -91,8 +101,8 @@ type CreateTaskParams struct {
 	Challenge   int64
 }
 
-func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) error {
-	_, err := q.db.ExecContext(ctx, createTask,
+func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createTask,
 		arg.ID,
 		arg.Name,
 		arg.Description,
@@ -100,7 +110,9 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) error {
 		arg.Size,
 		arg.Challenge,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteProject = `-- name: DeleteProject :exec

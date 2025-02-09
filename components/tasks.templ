@@ -117,7 +117,11 @@ templ Task(t db.Task) {
 
 templ EditTask(t db.Task) {
 	{{ now := time.Now() }}
-	<form hx-target="this" hx-post={ fmt.Sprintf("/apply_task_edit/%d", t.ID) }>
+	<form
+		class="flex justify-between gap-3"
+		hx-target="this"
+		hx-post={ fmt.Sprintf("/apply_task_edit/%d", t.ID) }
+	>
 		<input type="text" name="name" value={ t.Name }/>
 		<div class="flex gap-1">
 			<span>Size:</span>
@@ -156,13 +160,18 @@ templ EditTask(t db.Task) {
 				</option>
 				<option
 					value="medium"
-					if t.Size == 1 {
+					if t.Challenge == 1 {
 						selected
 					}
 				>
 					Medium
 				</option>
-				<option value="hard">
+				<option
+					value="hard"
+					if t.Challenge == 2 {
+						selected
+					}
+				>
 					Hard
 				</option>
 			</select>
@@ -175,4 +184,65 @@ templ EditTask(t db.Task) {
 		/>
 		<button type="submit">Apply</button>
 	</form>
+}
+
+templ CreateTask(err error) {
+	{{ now := time.Now().Format(time.DateOnly) }}
+	<div class="flex flex-col gap-1" hx-target="this">
+		<form
+			class="flex justify-between gap-3"
+			hx-post={ fmt.Sprintf("/create_task") }
+		>
+			<input type="text" name="name" value=""/>
+			<div class="flex gap-1">
+				<span>Size:</span>
+				<select name="size">
+					<option value="">
+						-- Select --
+					</option>
+					<option value="small">
+						Small
+					</option>
+					<option value="medium">
+						Medium
+					</option>
+					<option value="large">
+						Large
+					</option>
+				</select>
+			</div>
+			<div class="flex gap-1">
+				<span>Challenge:</span>
+				<select size="challenge">
+					<option value="">
+						-- Select --
+					</option>
+					<option value="easy">
+						Easy
+					</option>
+					<option value="medium">
+						Medium
+					</option>
+					<option value="hard">
+						Hard
+					</option>
+				</select>
+			</div>
+			<input
+				type="date"
+				name="deadline"
+				value={ now }
+				min={ now }
+			/>
+			<button type="submit">Create</button>
+		</form>
+		if err != nil {
+			<p class="text-red-600">Error: { err.Error() }</p>
+		}
+	</div>
+}
+
+templ AfterCreateTask(t db.Task) {
+	@Task(t)
+	@CreateTask(nil)
 }

@@ -7,5 +7,6 @@ templ Dashboard(tasks []db.Task) {
 		for _, t := range tasks {
 			@Task(t)
 		}
+		@CreateTask(nil)
 	</div>
 }

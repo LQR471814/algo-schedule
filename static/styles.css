@@ -8,9 +8,6 @@
     'Courier New', monospace;
     --color-red-600: oklch(0.577 0.245 27.325);
     --spacing: 0.25rem;
-    --text-xl: 1.25rem;
-    --text-xl--line-height: calc(1.75 / 1.25);
-    --font-weight-bold: 700;
     --default-font-family: var(--font-sans);
     --default-font-feature-settings: var(--font-sans--font-feature-settings);
     --default-font-variation-settings: var(--font-sans--font-variation-settings);
@@ -164,6 +161,9 @@
   .fixed {
     position: fixed;
   }
+  .static {
+    position: static;
+  }
   .contents {
     display: contents;
   }
@@ -173,31 +173,19 @@
   .table {
     display: table;
   }
-  .h-full {
-    height: 100%;
-  }
-  .w-full {
-    width: 100%;
-  }
   .flex-col {
     flex-direction: column;
+  }
+  .justify-between {
+    justify-content: space-between;
   }
   .gap-1 {
     gap: calc(var(--spacing) * 1);
   }
-  .text-xl {
-    font-size: var(--text-xl);
-    line-height: var(--tw-leading, var(--text-xl--line-height));
-  }
-  .font-bold {
-    --tw-font-weight: var(--font-weight-bold);
-    font-weight: var(--font-weight-bold);
+  .gap-3 {
+    gap: calc(var(--spacing) * 3);
   }
   .text-red-600 {
     color: var(--color-red-600);
   }
-}
-@property --tw-font-weight {
-  syntax: "*";
-  inherits: false;
 }

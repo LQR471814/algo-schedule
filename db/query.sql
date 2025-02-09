@@ -1,5 +1,6 @@
--- name: CreateTask :exec
-insert into task(id, name, description, deadline, size, challenge) values (?, ?, ?, ?, ?, ?);
+-- name: CreateTask :one
+insert into task(id, name, description, deadline, size, challenge) values (?, ?, ?, ?, ?, ?)
+returning id;
 
 -- name: ListTasks :many
 select * from task;
@@ -19,8 +20,9 @@ where id = ?;
 -- name: DeleteTask :exec
 delete from task where id = ?;
 
--- name: CreateProject :exec
-insert into project(id, name, description, deadline) values (?, ?, ?, ?);
+-- name: CreateProject :one
+insert into project(id, name, description, deadline) values (?, ?, ?, ?)
+returning id;
 
 -- name: ListProjects :many
 select * from project;
@@ -38,8 +40,9 @@ where id = ?;
 -- name: DeleteProject :exec
 delete from project where id = ?;
 
--- name: CreateProjectTask :exec
-insert into project_task(id, project_id, name, description, size, challenge) values (?, ?, ?, ?, ?, ?);
+-- name: CreateProjectTask :one
+insert into project_task(id, project_id, name, description, size, challenge) values (?, ?, ?, ?, ?, ?)
+returning id;
 
 -- name: ListProjectTasks :many
 select * from project_task where project_id = ?;
@@ -58,8 +61,9 @@ where id = ?;
 -- name: DeleteProjectTask :exec
 delete from project_task where id = ?;
 
--- name: CreateQuota :exec
-insert into quota(id, fixed_time, duration, recurrence_interval) values (?, ?, ?, ?);
+-- name: CreateQuota :one
+insert into quota(id, fixed_time, duration, recurrence_interval) values (?, ?, ?, ?)
+returning id;
 
 -- name: ListQuotas :many
 select * from quota;
