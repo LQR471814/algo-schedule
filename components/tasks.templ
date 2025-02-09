@@ -85,7 +85,8 @@ func formatDeadline(end time.Time) string {
 }
 
 templ Task(t db.Task) {
-	<div hx-target="this">
+	{{ editHref := fmt.Sprintf("/edit_task/%d", t.ID) }}
+	<div class="grid grid-cols-[1fr_1fr_1fr_1fr_64px] gap-3" hx-target="this">
 		<p>{ t.Name }</p>
 		<div class="flex gap-1">
 			<span>Size:</span>
@@ -109,20 +110,31 @@ templ Task(t db.Task) {
 		</div>
 		<div class="flex gap-1">
 			<span>Deadline:</span>
-			{ formatDeadline(t.Deadline) }
+			{ t.Deadline.Format(time.DateOnly) } ({ formatDeadline(t.Deadline) })
 		</div>
-		<button hx-get={ fmt.Sprintf("/edit_task/%d", t.ID) }>Edit</button>
+		<button hx-get={ editHref }>Edit</button>
 	</div>
 }
 
 templ EditTask(t db.Task) {
 	{{ now := time.Now() }}
+	{{ formId := fmt.Sprintf("form-edit-task-%d", t.ID) }}
 	<form
-		class="flex justify-between gap-3"
+		class="grid grid-cols-[1fr_1fr_1fr_1fr_64px] gap-3"
+		id={ formId }
 		hx-target="this"
 		hx-post={ fmt.Sprintf("/apply_task_edit/%d", t.ID) }
 	>
-		<input type="text" name="name" value={ t.Name }/>
+		<input
+			type="text"
+			name="name"
+			value={ t.Name }
+			onkeyup="this.setCustomValidity('')"
+			hx-on:htmx:validation:validate="if (this.value === '') {
+				this.setCustomValidity('this field is required')
+				htmx.find('')
+			}"
+		/>
 		<div class="flex gap-1">
 			<span>Size:</span>
 			<select name="size">
@@ -149,7 +161,7 @@ templ EditTask(t db.Task) {
 		</div>
 		<div class="flex gap-1">
 			<span>Challenge:</span>
-			<select size="challenge">
+			<select name="challenge">
 				<option
 					value="easy"
 					if t.Challenge == 0 {
@@ -186,63 +198,59 @@ templ EditTask(t db.Task) {
 	</form>
 }
 
-templ CreateTask(err error) {
-	{{ now := time.Now().Format(time.DateOnly) }}
-	<div class="flex flex-col gap-1" hx-target="this">
-		<form
-			class="flex justify-between gap-3"
-			hx-post={ fmt.Sprintf("/create_task") }
-		>
-			<input type="text" name="name" value=""/>
-			<div class="flex gap-1">
-				<span>Size:</span>
-				<select name="size">
-					<option value="">
-						-- Select --
-					</option>
-					<option value="small">
-						Small
-					</option>
-					<option value="medium">
-						Medium
-					</option>
-					<option value="large">
-						Large
-					</option>
-				</select>
-			</div>
-			<div class="flex gap-1">
-				<span>Challenge:</span>
-				<select size="challenge">
-					<option value="">
-						-- Select --
-					</option>
-					<option value="easy">
-						Easy
-					</option>
-					<option value="medium">
-						Medium
-					</option>
-					<option value="hard">
-						Hard
-					</option>
-				</select>
-			</div>
-			<input
-				type="date"
-				name="deadline"
-				value={ now }
-				min={ now }
-			/>
-			<button type="submit">Create</button>
-		</form>
-		if err != nil {
-			<p class="text-red-600">Error: { err.Error() }</p>
-		}
-	</div>
+templ CreateTask() {
+	{{ now := time.Now().AddDate(0, 0, 1).Format(time.DateOnly) }}
+	<form
+		class="grid grid-cols-[1fr_1fr_1fr_1fr_64px] gap-3"
+		hx-target="this"
+		hx-post={ fmt.Sprintf("/create_task") }
+	>
+		<input type="text" name="name"/>
+		<div class="flex gap-1">
+			<span>Size:</span>
+			<select name="size">
+				<option value="">
+					-- Select --
+				</option>
+				<option value="small">
+					Small
+				</option>
+				<option value="medium">
+					Medium
+				</option>
+				<option value="large">
+					Large
+				</option>
+			</select>
+		</div>
+		<div class="flex gap-1">
+			<span>Challenge:</span>
+			<select name="challenge">
+				<option value="">
+					-- Select --
+				</option>
+				<option value="easy">
+					Easy
+				</option>
+				<option value="medium">
+					Medium
+				</option>
+				<option value="hard">
+					Hard
+				</option>
+			</select>
+		</div>
+		<input
+			type="date"
+			name="deadline"
+			value={ now }
+			min={ now }
+		/>
+		<button type="submit">Create</button>
+	</form>
 }
 
 templ AfterCreateTask(t db.Task) {
 	@Task(t)
-	@CreateTask(nil)
+	@CreateTask()
 }

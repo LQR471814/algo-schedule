@@ -52,7 +52,7 @@ func registerRoutes(qry *db.Queries) {
 
 		name := r.Form.Get("name")
 		if name == "" {
-			components.CreateTask(fmt.Errorf("required field: name")).Render(ctx, w)
+			writeError(400, fmt.Errorf("required field: name"), w)
 			return
 		}
 
@@ -63,7 +63,7 @@ func registerRoutes(qry *db.Queries) {
 		case "medium":
 			size = 1
 		case "":
-			components.CreateTask(fmt.Errorf("required field: size")).Render(ctx, w)
+			writeError(400, fmt.Errorf("required field: size"), w)
 			return
 		}
 
@@ -76,7 +76,7 @@ func registerRoutes(qry *db.Queries) {
 		case "hard":
 			challenge = 2
 		case "":
-			components.CreateTask(fmt.Errorf("required field: challenge")).Render(ctx, w)
+			writeError(400, fmt.Errorf("required field: challenge"), w)
 			return
 		}
 
@@ -87,7 +87,6 @@ func registerRoutes(qry *db.Queries) {
 		}
 
 		id, err := qry.CreateTask(r.Context(), db.CreateTaskParams{
-			ID:        0,
 			Name:      name,
 			Size:      size,
 			Challenge: challenge,

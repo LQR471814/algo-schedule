@@ -1,5 +1,5 @@
 -- name: CreateTask :one
-insert into task(id, name, description, deadline, size, challenge) values (?, ?, ?, ?, ?, ?)
+insert into task(name, description, deadline, size, challenge) values (?, ?, ?, ?, ?)
 returning id;
 
 -- name: ListTasks :many
@@ -21,7 +21,7 @@ where id = ?;
 delete from task where id = ?;
 
 -- name: CreateProject :one
-insert into project(id, name, description, deadline) values (?, ?, ?, ?)
+insert into project(name, description, deadline) values (?, ?, ?)
 returning id;
 
 -- name: ListProjects :many
@@ -41,7 +41,7 @@ where id = ?;
 delete from project where id = ?;
 
 -- name: CreateProjectTask :one
-insert into project_task(id, project_id, name, description, size, challenge) values (?, ?, ?, ?, ?, ?)
+insert into project_task(project_id, name, description, size, challenge) values (?, ?, ?, ?, ?)
 returning id;
 
 -- name: ListProjectTasks :many
@@ -62,7 +62,7 @@ where id = ?;
 delete from project_task where id = ?;
 
 -- name: CreateQuota :one
-insert into quota(id, fixed_time, duration, recurrence_interval) values (?, ?, ?, ?)
+insert into quota(fixed_time, duration, recurrence_interval) values (?, ?, ?)
 returning id;
 
 -- name: ListQuotas :many

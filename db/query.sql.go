@@ -12,36 +12,29 @@ import (
 )
 
 const createProject = `-- name: CreateProject :one
-insert into project(id, name, description, deadline) values (?, ?, ?, ?)
+insert into project(name, description, deadline) values (?, ?, ?)
 returning id
 `
 
 type CreateProjectParams struct {
-	ID          int64
 	Name        string
 	Description sql.NullString
 	Deadline    time.Time
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, createProject,
-		arg.ID,
-		arg.Name,
-		arg.Description,
-		arg.Deadline,
-	)
+	row := q.db.QueryRowContext(ctx, createProject, arg.Name, arg.Description, arg.Deadline)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
 }
 
 const createProjectTask = `-- name: CreateProjectTask :one
-insert into project_task(id, project_id, name, description, size, challenge) values (?, ?, ?, ?, ?, ?)
+insert into project_task(project_id, name, description, size, challenge) values (?, ?, ?, ?, ?)
 returning id
 `
 
 type CreateProjectTaskParams struct {
-	ID          int64
 	ProjectID   int64
 	Name        string
 	Description sql.NullString
@@ -51,7 +44,6 @@ type CreateProjectTaskParams struct {
 
 func (q *Queries) CreateProjectTask(ctx context.Context, arg CreateProjectTaskParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, createProjectTask,
-		arg.ID,
 		arg.ProjectID,
 		arg.Name,
 		arg.Description,
@@ -64,36 +56,29 @@ func (q *Queries) CreateProjectTask(ctx context.Context, arg CreateProjectTaskPa
 }
 
 const createQuota = `-- name: CreateQuota :one
-insert into quota(id, fixed_time, duration, recurrence_interval) values (?, ?, ?, ?)
+insert into quota(fixed_time, duration, recurrence_interval) values (?, ?, ?)
 returning id
 `
 
 type CreateQuotaParams struct {
-	ID                 int64
 	FixedTime          int64
 	Duration           int64
 	RecurrenceInterval int64
 }
 
 func (q *Queries) CreateQuota(ctx context.Context, arg CreateQuotaParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, createQuota,
-		arg.ID,
-		arg.FixedTime,
-		arg.Duration,
-		arg.RecurrenceInterval,
-	)
+	row := q.db.QueryRowContext(ctx, createQuota, arg.FixedTime, arg.Duration, arg.RecurrenceInterval)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
 }
 
 const createTask = `-- name: CreateTask :one
-insert into task(id, name, description, deadline, size, challenge) values (?, ?, ?, ?, ?, ?)
+insert into task(name, description, deadline, size, challenge) values (?, ?, ?, ?, ?)
 returning id
 `
 
 type CreateTaskParams struct {
-	ID          int64
 	Name        string
 	Description sql.NullString
 	Deadline    time.Time
@@ -103,7 +88,6 @@ type CreateTaskParams struct {
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, createTask,
-		arg.ID,
 		arg.Name,
 		arg.Description,
 		arg.Deadline,

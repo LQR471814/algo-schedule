@@ -3,10 +3,10 @@ package components
 import "algo-schedule/db"
 
 templ Dashboard(tasks []db.Task) {
-	<div class="flex flex-col gap-1">
+	<div class="grid gap-2">
 		for _, t := range tasks {
 			@Task(t)
 		}
-		@CreateTask(nil)
+		@CreateTask()
 	</div>
 }
