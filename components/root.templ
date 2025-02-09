@@ -1,0 +1,13 @@
+package components
+
+templ Root(contents templ.Component) {
+	<html>
+		<head>
+			<meta name="htmx-config" content='{"defaultSwapStyle":"outerHTML"}' />
+			<link rel="stylesheet" type="text/css" href="/static/styles.css" />
+		</head>
+		<body>
+			@contents
+		</body>
+	</html>
+}

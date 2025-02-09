@@ -1,0 +1,178 @@
+package components
+
+import (
+	"algo-schedule/db"
+	"fmt"
+	"math"
+	"time"
+)
+
+var dateTerms = []string{"decades", "years", "months", "weeks", "days", "hours"}
+
+func formatDeadline(end time.Time) string {
+	now := time.Now()
+
+	if now.After(end) {
+		return "past"
+	}
+
+	added := now
+	decades := 0
+	years := 0
+	months := 0
+	weeks := 0
+	days := 0
+
+	for {
+		afterAdding := added.AddDate(10, 0, 0)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		decades++
+	}
+	for {
+		afterAdding := added.AddDate(1, 0, 0)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		years++
+	}
+	for {
+		afterAdding := added.AddDate(0, 1, 0)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		months++
+	}
+	for {
+		afterAdding := added.AddDate(0, 0, 7)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		weeks++
+	}
+	for {
+		afterAdding := added.AddDate(0, 0, 1)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		days++
+	}
+
+	hours := int(math.Floor(end.Sub(added).Hours()))
+
+	amounts := []int{decades, years, months, weeks, days, hours}
+	for i := 0; i < len(amounts)-1; i++ {
+		primary := amounts[i]
+		secondary := amounts[i+1]
+		if primary == 0 {
+			continue
+		}
+		if secondary > 0 {
+			return fmt.Sprintf("in %d %s, %d %s", primary, dateTerms[i], secondary, dateTerms[i+1])
+		}
+		return fmt.Sprintf("in %d %s", primary, dateTerms[i])
+	}
+	if hours > 0 {
+		return fmt.Sprintf("in %d hours", hours)
+	}
+	return "in < 1 hour"
+}
+
+templ Task(t db.Task) {
+	<div hx-target="this">
+		<p>{ t.Name }</p>
+		<div class="flex gap-1">
+			<span>Size:</span>
+			switch t.Size {
+				case 0:
+					Small
+				case 1:
+					Medium
+			}
+		</div>
+		<div class="flex gap-1">
+			<span>Challenge:</span>
+			switch t.Challenge {
+				case 0:
+					Easy
+				case 1:
+					Medium
+				case 2:
+					Hard
+			}
+		</div>
+		<div class="flex gap-1">
+			<span>Deadline:</span>
+			{ formatDeadline(t.Deadline) }
+		</div>
+		<button hx-get={ fmt.Sprintf("/edit_task/%d", t.ID) }>Edit</button>
+	</div>
+}
+
+templ EditTask(t db.Task) {
+	{{ now := time.Now() }}
+	<form hx-target="this" hx-post={ fmt.Sprintf("/apply_task_edit/%d", t.ID) }>
+		<input type="text" name="name" value={ t.Name }/>
+		<div class="flex gap-1">
+			<span>Size:</span>
+			<select name="size">
+				<option
+					value="small"
+					if t.Size == 0 {
+						selected
+					}
+				>
+					Small
+				</option>
+				<option
+					value="medium"
+					if t.Size == 1 {
+						selected
+					}
+				>
+					Medium
+				</option>
+				<option value="large">
+					Large
+				</option>
+			</select>
+		</div>
+		<div class="flex gap-1">
+			<span>Challenge:</span>
+			<select size="challenge">
+				<option
+					value="easy"
+					if t.Challenge == 0 {
+						selected
+					}
+				>
+					Easy
+				</option>
+				<option
+					value="medium"
+					if t.Size == 1 {
+						selected
+					}
+				>
+					Medium
+				</option>
+				<option value="hard">
+					Hard
+				</option>
+			</select>
+		</div>
+		<input
+			type="date"
+			name="deadline"
+			value={ t.Deadline.Format(time.DateOnly) }
+			min={ now.Format(time.DateOnly) }
+		/>
+		<button type="submit">Apply</button>
+	</form>
+}
