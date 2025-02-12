@@ -21,6 +21,7 @@ type Router struct {
 
 func (router Router) Attach(mux *http.ServeMux) {
 	mux.HandleFunc("/", router.Root)
+	mux.HandleFunc("/task/{id}", router.ReadTask)
 	mux.HandleFunc("/create_task", router.CreateTask)
 	mux.HandleFunc("/start_edit_task/{id}", router.StartEditTask)
 	mux.HandleFunc("/end_edit_task/{id}", router.EndEditTask)
@@ -153,6 +154,22 @@ func (router Router) StartEditTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	templates.EditTask(task).Render(ctx, w)
+}
+
+func (router Router) ReadTask(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		writeError(400, fmt.Errorf("invalid id: %w", err), w)
+		return
+	}
+
+	task, err := router.qry.ReadTask(ctx, id)
+	if err != nil {
+		writeError(500, err, w)
+		return
+	}
+	templates.Task(task).Render(ctx, w)
 }
 
 func (router Router) EndEditTask(w http.ResponseWriter, r *http.Request) {

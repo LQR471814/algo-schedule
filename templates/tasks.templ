@@ -226,9 +226,14 @@ templ EditTask(t db.Task) {
 				</option>
 			</select>
 		</div>
-		<button type="submit">
-			@IconCheckLine("")
-		</button>
+		<div class="flex gap-2 justify-between">
+			<button type="submit">
+				@IconCheckLine("")
+			</button>
+			<button hx-get={ fmt.Sprintf("/task/%d", t.ID) }>
+				@IconCloseLine("")
+			</button>
+		</div>
 		<div class="col-span-2">
 			<textarea
 				name="description"
