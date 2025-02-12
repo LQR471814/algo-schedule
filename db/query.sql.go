@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
@@ -18,7 +17,7 @@ returning id
 
 type CreateProjectParams struct {
 	Name        string
-	Description sql.NullString
+	Description string
 	Deadline    time.Time
 }
 
@@ -37,7 +36,7 @@ returning id
 type CreateProjectTaskParams struct {
 	ProjectID   int64
 	Name        string
-	Description sql.NullString
+	Description string
 	Size        int64
 	Challenge   int64
 }
@@ -80,7 +79,7 @@ returning id
 
 type CreateTaskParams struct {
 	Name        string
-	Description sql.NullString
+	Description string
 	Deadline    time.Time
 	Size        int64
 	Challenge   int64
@@ -100,7 +99,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, 
 }
 
 const deleteProject = `-- name: DeleteProject :exec
-delete from project where id = ?
+update project set deleted_at = datetime('now') where id = ?
 `
 
 func (q *Queries) DeleteProject(ctx context.Context, id int64) error {
@@ -109,7 +108,7 @@ func (q *Queries) DeleteProject(ctx context.Context, id int64) error {
 }
 
 const deleteProjectTask = `-- name: DeleteProjectTask :exec
-delete from project_task where id = ?
+update project_task set deleted_at = datetime('now') where id = ?
 `
 
 func (q *Queries) DeleteProjectTask(ctx context.Context, id int64) error {
@@ -118,7 +117,7 @@ func (q *Queries) DeleteProjectTask(ctx context.Context, id int64) error {
 }
 
 const deleteQuota = `-- name: DeleteQuota :exec
-delete from quota where id = ?
+update quota set deleted_at = datetime('now') where id = ?
 `
 
 func (q *Queries) DeleteQuota(ctx context.Context, id int64) error {
@@ -127,7 +126,7 @@ func (q *Queries) DeleteQuota(ctx context.Context, id int64) error {
 }
 
 const deleteTask = `-- name: DeleteTask :exec
-delete from task where id = ?
+update task set deleted_at = datetime('now') where id = ?
 `
 
 func (q *Queries) DeleteTask(ctx context.Context, id int64) error {
@@ -135,8 +134,145 @@ func (q *Queries) DeleteTask(ctx context.Context, id int64) error {
 	return err
 }
 
+const listDeletedProjectTasks = `-- name: ListDeletedProjectTasks :many
+select id, project_id, deleted_at, name, description, size, challenge from project_task where project_id = ? and deleted_at is not null
+`
+
+func (q *Queries) ListDeletedProjectTasks(ctx context.Context, projectID int64) ([]ProjectTask, error) {
+	rows, err := q.db.QueryContext(ctx, listDeletedProjectTasks, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProjectTask
+	for rows.Next() {
+		var i ProjectTask
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.DeletedAt,
+			&i.Name,
+			&i.Description,
+			&i.Size,
+			&i.Challenge,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeletedProjects = `-- name: ListDeletedProjects :many
+select id, deleted_at, name, description, deadline from project where deleted_at is not null
+`
+
+func (q *Queries) ListDeletedProjects(ctx context.Context) ([]Project, error) {
+	rows, err := q.db.QueryContext(ctx, listDeletedProjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Project
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.DeletedAt,
+			&i.Name,
+			&i.Description,
+			&i.Deadline,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeletedQuotas = `-- name: ListDeletedQuotas :many
+select id, deleted_at, description, fixed_time, duration, recurrence_interval from quota where deleted_at is not null
+`
+
+func (q *Queries) ListDeletedQuotas(ctx context.Context) ([]Quotum, error) {
+	rows, err := q.db.QueryContext(ctx, listDeletedQuotas)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Quotum
+	for rows.Next() {
+		var i Quotum
+		if err := rows.Scan(
+			&i.ID,
+			&i.DeletedAt,
+			&i.Description,
+			&i.FixedTime,
+			&i.Duration,
+			&i.RecurrenceInterval,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeletedTasks = `-- name: ListDeletedTasks :many
+select id, deleted_at, name, description, deadline, size, challenge from task where deleted_at is not null
+`
+
+func (q *Queries) ListDeletedTasks(ctx context.Context) ([]Task, error) {
+	rows, err := q.db.QueryContext(ctx, listDeletedTasks)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Task
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.ID,
+			&i.DeletedAt,
+			&i.Name,
+			&i.Description,
+			&i.Deadline,
+			&i.Size,
+			&i.Challenge,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProjectTasks = `-- name: ListProjectTasks :many
-select id, project_id, name, description, size, challenge from project_task where project_id = ?
+select id, project_id, deleted_at, name, description, size, challenge from project_task where project_id = ? and deleted_at is null
 `
 
 func (q *Queries) ListProjectTasks(ctx context.Context, projectID int64) ([]ProjectTask, error) {
@@ -151,6 +287,7 @@ func (q *Queries) ListProjectTasks(ctx context.Context, projectID int64) ([]Proj
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProjectID,
+			&i.DeletedAt,
 			&i.Name,
 			&i.Description,
 			&i.Size,
@@ -170,7 +307,7 @@ func (q *Queries) ListProjectTasks(ctx context.Context, projectID int64) ([]Proj
 }
 
 const listProjects = `-- name: ListProjects :many
-select id, name, description, deadline from project
+select id, deleted_at, name, description, deadline from project where deleted_at is null
 `
 
 func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
@@ -184,6 +321,7 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 		var i Project
 		if err := rows.Scan(
 			&i.ID,
+			&i.DeletedAt,
 			&i.Name,
 			&i.Description,
 			&i.Deadline,
@@ -202,7 +340,7 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 }
 
 const listQuotas = `-- name: ListQuotas :many
-select id, fixed_time, duration, recurrence_interval from quota
+select id, deleted_at, description, fixed_time, duration, recurrence_interval from quota where deleted_at is null
 `
 
 func (q *Queries) ListQuotas(ctx context.Context) ([]Quotum, error) {
@@ -216,6 +354,8 @@ func (q *Queries) ListQuotas(ctx context.Context) ([]Quotum, error) {
 		var i Quotum
 		if err := rows.Scan(
 			&i.ID,
+			&i.DeletedAt,
+			&i.Description,
 			&i.FixedTime,
 			&i.Duration,
 			&i.RecurrenceInterval,
@@ -234,7 +374,7 @@ func (q *Queries) ListQuotas(ctx context.Context) ([]Quotum, error) {
 }
 
 const listTasks = `-- name: ListTasks :many
-select id, name, description, deadline, size, challenge from task
+select id, deleted_at, name, description, deadline, size, challenge from task where deleted_at is null
 `
 
 func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
@@ -248,6 +388,7 @@ func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
 		var i Task
 		if err := rows.Scan(
 			&i.ID,
+			&i.DeletedAt,
 			&i.Name,
 			&i.Description,
 			&i.Deadline,
@@ -268,7 +409,7 @@ func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
 }
 
 const readProject = `-- name: ReadProject :one
-select id, name, description, deadline, size, challenge from task where id = ?
+select id, deleted_at, name, description, deadline, size, challenge from task where id = ? and deleted_at is null
 `
 
 func (q *Queries) ReadProject(ctx context.Context, id int64) (Task, error) {
@@ -276,6 +417,7 @@ func (q *Queries) ReadProject(ctx context.Context, id int64) (Task, error) {
 	var i Task
 	err := row.Scan(
 		&i.ID,
+		&i.DeletedAt,
 		&i.Name,
 		&i.Description,
 		&i.Deadline,
@@ -286,7 +428,7 @@ func (q *Queries) ReadProject(ctx context.Context, id int64) (Task, error) {
 }
 
 const readProjectTask = `-- name: ReadProjectTask :one
-select id, project_id, name, description, size, challenge from project_task where id = ?
+select id, project_id, deleted_at, name, description, size, challenge from project_task where id = ? and deleted_at is null
 `
 
 func (q *Queries) ReadProjectTask(ctx context.Context, id int64) (ProjectTask, error) {
@@ -295,6 +437,7 @@ func (q *Queries) ReadProjectTask(ctx context.Context, id int64) (ProjectTask, e
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
+		&i.DeletedAt,
 		&i.Name,
 		&i.Description,
 		&i.Size,
@@ -304,7 +447,7 @@ func (q *Queries) ReadProjectTask(ctx context.Context, id int64) (ProjectTask, e
 }
 
 const readQuota = `-- name: ReadQuota :one
-select id, fixed_time, duration, recurrence_interval from quota where id = ?
+select id, deleted_at, description, fixed_time, duration, recurrence_interval from quota where id = ? and deleted_at is null
 `
 
 func (q *Queries) ReadQuota(ctx context.Context, id int64) (Quotum, error) {
@@ -312,6 +455,8 @@ func (q *Queries) ReadQuota(ctx context.Context, id int64) (Quotum, error) {
 	var i Quotum
 	err := row.Scan(
 		&i.ID,
+		&i.DeletedAt,
+		&i.Description,
 		&i.FixedTime,
 		&i.Duration,
 		&i.RecurrenceInterval,
@@ -320,7 +465,7 @@ func (q *Queries) ReadQuota(ctx context.Context, id int64) (Quotum, error) {
 }
 
 const readTask = `-- name: ReadTask :one
-select id, name, description, deadline, size, challenge from task where id = ?
+select id, deleted_at, name, description, deadline, size, challenge from task where id = ? and deleted_at is null
 `
 
 func (q *Queries) ReadTask(ctx context.Context, id int64) (Task, error) {
@@ -328,6 +473,7 @@ func (q *Queries) ReadTask(ctx context.Context, id int64) (Task, error) {
 	var i Task
 	err := row.Scan(
 		&i.ID,
+		&i.DeletedAt,
 		&i.Name,
 		&i.Description,
 		&i.Deadline,
@@ -335,6 +481,42 @@ func (q *Queries) ReadTask(ctx context.Context, id int64) (Task, error) {
 		&i.Challenge,
 	)
 	return i, err
+}
+
+const unDeleteProject = `-- name: UnDeleteProject :exec
+update project set deleted_at = null where id = ?
+`
+
+func (q *Queries) UnDeleteProject(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, unDeleteProject, id)
+	return err
+}
+
+const unDeleteProjectTask = `-- name: UnDeleteProjectTask :exec
+update project_task set deleted_at = null where id = ?
+`
+
+func (q *Queries) UnDeleteProjectTask(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, unDeleteProjectTask, id)
+	return err
+}
+
+const unDeleteQuota = `-- name: UnDeleteQuota :exec
+update quota set deleted_at = null where id = ?
+`
+
+func (q *Queries) UnDeleteQuota(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, unDeleteQuota, id)
+	return err
+}
+
+const unDeleteTask = `-- name: UnDeleteTask :exec
+update task set deleted_at = null where id = ?
+`
+
+func (q *Queries) UnDeleteTask(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, unDeleteTask, id)
+	return err
 }
 
 const updateProject = `-- name: UpdateProject :exec
@@ -347,7 +529,7 @@ where id = ?
 
 type UpdateProjectParams struct {
 	Name        string
-	Description sql.NullString
+	Description string
 	Deadline    time.Time
 	ID          int64
 }
@@ -373,7 +555,7 @@ where id = ?
 
 type UpdateProjectTaskParams struct {
 	Name        string
-	Description sql.NullString
+	Description string
 	Size        int64
 	Challenge   int64
 	ID          int64
@@ -415,6 +597,17 @@ func (q *Queries) UpdateQuota(ctx context.Context, arg UpdateQuotaParams) error 
 	return err
 }
 
+const updateSettings = `-- name: UpdateSettings :exec
+insert into settings(id, timezone) values (1, ?)
+on conflict do update set
+    timezone = excluded.timezone
+`
+
+func (q *Queries) UpdateSettings(ctx context.Context, timezone string) error {
+	_, err := q.db.ExecContext(ctx, updateSettings, timezone)
+	return err
+}
+
 const updateTask = `-- name: UpdateTask :exec
 update task set 
     name = ?,
@@ -427,7 +620,7 @@ where id = ?
 
 type UpdateTaskParams struct {
 	Name        string
-	Description sql.NullString
+	Description string
 	Deadline    time.Time
 	Size        int64
 	Challenge   int64

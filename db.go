@@ -45,16 +45,15 @@ func OpenAndMigrateDB(schema, path string) (*sql.DB, error) {
 	}
 	cmd := exec.Command(
 		"atlas", "schema", "apply",
+		"--auto-approve",
 		"--url", dbUrl.String(),
 		"--to", "file://temp_migration_schema.sql",
 		"--dev-url", "sqlite://file?mode=memory",
 	)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 
-	err = cmd.Run()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
+		slog.Error(string(out))
 		return nil, err
 	}
 

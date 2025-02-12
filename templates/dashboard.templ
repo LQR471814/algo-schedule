@@ -1,0 +1,9 @@
+package templates
+
+import "algo-schedule/db"
+
+templ Dashboard(tasks []db.Task) {
+	<div class="grid gap-4 grid-cols-[fit-content_fit-content]">
+		@TaskList(tasks)
+	</div>
+}

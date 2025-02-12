@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+html, body {
+	@apply h-full m-0;
+}
+
+select, input, textarea {
+	@apply border border-gray-500 rounded-sm;
+}
+
+textarea, input[type=text] {
+	@apply w-full;
+}
+
+button {
+	@apply flex bg-gray-200 border border-gray-500 rounded-sm cursor-pointer;
+}
+
+svg {
+	@apply m-auto min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] text-gray-700;
+}
+
+label, hr {
+	@apply text-gray-500; 
+}
+
+h6 {
+	@apply font-bold;
+}

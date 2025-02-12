@@ -1,0 +1,343 @@
+package templates
+
+import (
+	"algo-schedule/db"
+	"fmt"
+	"math"
+	"time"
+)
+
+const taskGridClass = "grid grid-cols-[minmax(64px,300px)_minmax(min-content,150px)_minmax(min-content,240px)_64px] gap-1 items-start"
+
+const nonEmptyValidate = `if (this.value === '') {
+	this.setCustomValidity('This field is required.')
+	let form = this
+	while (form != null) {
+		if (form instanceof HTMLFormElement) {
+			break
+		}
+		form = form.parentNode
+	}
+	form.reportValidity()
+}`
+
+var textRequiredAttrs = map[string]any{
+	"onkeyup":                        "this.setCustomValidity('')",
+	"hx-on:htmx:validation:validate": nonEmptyValidate,
+}
+
+var selectRequiredAttrs = map[string]any{
+	"onchange":                       "this.setCustomValidity('')",
+	"hx-on:htmx:validation:validate": nonEmptyValidate,
+}
+
+var dateTerms = []string{"decades", "years", "months", "weeks", "days", "hours"}
+
+func formatDeadline(end time.Time) string {
+	now := time.Now()
+
+	if now.After(end) {
+		return "past"
+	}
+
+	added := now
+	decades := 0
+	years := 0
+	months := 0
+	weeks := 0
+	days := 0
+
+	for {
+		afterAdding := added.AddDate(10, 0, 0)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		decades++
+	}
+	for {
+		afterAdding := added.AddDate(1, 0, 0)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		years++
+	}
+	for {
+		afterAdding := added.AddDate(0, 1, 0)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		months++
+	}
+	for {
+		afterAdding := added.AddDate(0, 0, 7)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		weeks++
+	}
+	for {
+		afterAdding := added.AddDate(0, 0, 1)
+		if afterAdding.After(end) {
+			break
+		}
+		added = afterAdding
+		days++
+	}
+
+	hours := int(math.Floor(end.Sub(added).Hours()))
+
+	amounts := []int{decades, years, months, weeks, days, hours}
+	for i := 0; i < len(amounts)-1; i++ {
+		primary := amounts[i]
+		secondary := amounts[i+1]
+		if primary == 0 {
+			continue
+		}
+		if secondary > 0 {
+			return fmt.Sprintf("in %d %s, %d %s", primary, dateTerms[i], secondary, dateTerms[i+1])
+		}
+		return fmt.Sprintf("in %d %s", primary, dateTerms[i])
+	}
+	if hours > 0 {
+		return fmt.Sprintf("in %d hours", hours)
+	}
+	return "in < 1 hour"
+}
+
+templ Task(t db.Task) {
+	<div class={ taskGridClass } hx-target="this">
+		<h6>
+			{ t.Name }
+		</h6>
+		<div>
+			switch t.Size {
+				case db.SIZE_SMALL:
+					Small
+				case db.SIZE_MEDIUM:
+					Medium
+			}
+		</div>
+		<div>
+			switch t.Challenge {
+				case db.CHALLENGE_EASY:
+					Easy
+				case db.CHALLENGE_MEDIUM:
+					Medium Difficulty
+				case db.CHALLENGE_HARD:
+					Hard
+			}
+		</div>
+		<div class="flex gap-2 justify-between">
+			<button hx-get={ fmt.Sprintf("/start_edit_task/%d", t.ID) }>
+				@IconEditLine("")
+			</button>
+			<button hx-delete={ fmt.Sprintf("/delete_task/%d", t.ID) }>
+				@IconDeleteBinLine("")
+			</button>
+		</div>
+		<p class="col-span-2">
+			if t.Description == "" {
+				-
+			}
+			{ t.Description }
+		</p>
+		<div class="col-span-2">
+			{ t.Deadline.Format(time.DateOnly) } ({ formatDeadline(t.Deadline) })
+		</div>
+	</div>
+}
+
+templ EditTask(t db.Task) {
+	{{ now := time.Now() }}
+	{{ formId := fmt.Sprintf("form-edit-task-%d", t.ID) }}
+	<form
+		class={ taskGridClass }
+		id={ formId }
+		hx-target="this"
+		hx-post={ fmt.Sprintf("/end_edit_task/%d", t.ID) }
+	>
+		<div>
+			<input
+				type="text"
+				name="name"
+				placeholder="Task name"
+				value={ t.Name }
+				{ textRequiredAttrs... }
+			/>
+		</div>
+		<div>
+			<select
+				name="size"
+				{ selectRequiredAttrs... }
+			>
+				<option
+					value="small"
+					if t.Size == db.SIZE_SMALL {
+						selected
+					}
+				>
+					Small
+				</option>
+				<option
+					value="medium"
+					if t.Size == db.SIZE_MEDIUM {
+						selected
+					}
+				>
+					Medium
+				</option>
+				<option value="large">
+					Large
+				</option>
+			</select>
+		</div>
+		<div>
+			<select
+				name="challenge"
+				{ selectRequiredAttrs... }
+			>
+				<option
+					value="easy"
+					if t.Challenge == db.CHALLENGE_EASY {
+						selected
+					}
+				>
+					Easy
+				</option>
+				<option
+					value="medium"
+					if t.Challenge == db.CHALLENGE_MEDIUM {
+						selected
+					}
+				>
+					Medium Difficulty
+				</option>
+				<option
+					value="hard"
+					if t.Challenge == db.CHALLENGE_HARD {
+						selected
+					}
+				>
+					Hard
+				</option>
+			</select>
+		</div>
+		<button type="submit">
+			@IconCheckLine("")
+		</button>
+		<div class="col-span-2">
+			<textarea
+				name="description"
+				rows="5"
+				cols="40"
+				placeholder="Enter a description here (optional)"
+			>
+				{ t.Description }
+			</textarea>
+		</div>
+		<div class="col-span-2">
+			<input
+				type="date"
+				name="deadline"
+				value={ t.Deadline.Format(time.DateOnly) }
+				min={ now.Format(time.DateOnly) }
+			/>
+		</div>
+	</form>
+}
+
+templ CreateTask() {
+	{{ now := time.Now().Format(time.DateOnly) }}
+	<form
+		class={ taskGridClass }
+		hx-target="this"
+		hx-post={ fmt.Sprintf("/create_task") }
+	>
+		<div>
+			<input
+				type="text"
+				name="name"
+				placeholder="Task name"
+				{ textRequiredAttrs... }
+			/>
+		</div>
+		<div>
+			<select
+				name="size"
+				{ selectRequiredAttrs... }
+			>
+				<option value="">
+					-- Size --
+				</option>
+				<option value="small">
+					Small
+				</option>
+				<option value="medium">
+					Medium
+				</option>
+				<option value="large">
+					Large
+				</option>
+			</select>
+		</div>
+		<div>
+			<select
+				name="challenge"
+				{ selectRequiredAttrs... }
+			>
+				<option value="">
+					-- Difficulty --
+				</option>
+				<option value="easy">
+					Easy
+				</option>
+				<option value="medium">
+					Medium Difficulty
+				</option>
+				<option value="hard">
+					Hard
+				</option>
+			</select>
+		</div>
+		<button type="submit">
+			@IconAddLine("")
+		</button>
+		<div class="col-span-2">
+			<textarea
+				name="description"
+				rows="5"
+				cols="40"
+				placeholder="Enter a description here (optional)"
+				value=""
+			></textarea>
+		</div>
+		<div class="col-span-2">
+			<input
+				type="date"
+				name="deadline"
+				value={ now }
+				min={ now }
+			/>
+		</div>
+	</form>
+}
+
+templ AfterCreateTask(t db.Task) {
+	@Task(t)
+	<hr/>
+	@CreateTask()
+}
+
+templ TaskList(tasks []db.Task) {
+	<div class="grid gap-2 w-fit p-3 border border-gray-500">
+		for _, t := range tasks {
+			@Task(t)
+			<hr/>
+		}
+		@CreateTask()
+	</div>
+}

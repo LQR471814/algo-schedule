@@ -11,31 +11,41 @@ import (
 
 type Project struct {
 	ID          int64
+	DeletedAt   sql.NullTime
 	Name        string
-	Description sql.NullString
+	Description string
 	Deadline    time.Time
 }
 
 type ProjectTask struct {
 	ID          int64
 	ProjectID   int64
+	DeletedAt   sql.NullTime
 	Name        string
-	Description sql.NullString
+	Description string
 	Size        int64
 	Challenge   int64
 }
 
 type Quotum struct {
 	ID                 int64
+	DeletedAt          sql.NullTime
+	Description        interface{}
 	FixedTime          int64
 	Duration           int64
 	RecurrenceInterval int64
 }
 
+type Setting struct {
+	ID       int64
+	Timezone string
+}
+
 type Task struct {
 	ID          int64
+	DeletedAt   sql.NullTime
 	Name        string
-	Description sql.NullString
+	Description string
 	Deadline    time.Time
 	Size        int64
 	Challenge   int64
