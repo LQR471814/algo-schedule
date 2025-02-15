@@ -1,0 +1,72 @@
+package templates
+
+import (
+	"fmt"
+	"time"
+)
+
+type TimeBlock struct {
+	Name       string
+	Start, End time.Time
+}
+
+func (block TimeBlock) percentages(dayStart time.Time) (start, end float64) {
+	start = float64(block.Start.Sub(dayStart).Minutes()) / float64(24*60*time.Minute)
+	end = float64(block.End.Sub(dayStart).Minutes()) / float64(24*60*time.Minute)
+	return start, end
+}
+
+templ Day(dayStart time.Time, blocks []TimeBlock) {
+	<div class="flex flex-col gap-3">
+		<h1>{ fmt.Sprint(dayStart.Day()) }</h1>
+		<div class="relative fit-content">
+			<div class="flex flex-col w-full">
+				for i := range 24 {
+					<div class="flex-1 border border-x-0 border-y-2 border-black w-full min-h-[100px]">
+						<p class="text-sm">{ fmt.Sprint(i+1) }</p>
+					</div>
+				}
+			</div>
+			for _, b := range blocks {
+				{{ start, end := b.percentages(dayStart) }}
+				if start < 0 {
+					{{ continue }}
+				}
+				if end > 1 {
+					{{ end = 1 }}
+				}
+				{{ style := fmt.Sprintf("top: %f%%; height: %f%%", start*100, (end-start)*100) }}
+				<div class="absolute bg-red-500 left-0 w-full" { templ.Attributes{"style": style}... }>
+					<p>{ b.Name }</p>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+func blockBounds(blocks []TimeBlock) (start time.Time, days int) {
+	start = time.Time{}
+	end := time.Time{}
+	for _, b := range blocks {
+		if start == (time.Time{}) || b.Start.Before(start) {
+			start = b.Start
+		}
+		if end == (time.Time{}) || b.End.After(end) {
+			end = b.End
+		}
+	}
+	days = int(end.Sub(start).Hours()) / 24
+	return
+}
+
+templ DayList(tz *time.Location, blocks []TimeBlock) {
+	{{ start, days := blockBounds(blocks) }}
+	<div class="flex flex-col gap-3">
+		<h1>{ fmt.Sprint(start.Month()) }</h1>
+		<div class="flex gap-3">
+			for i := range days {
+				@Day(time.Date(start.Year(), start.Month(), start.Day()+i, 0, 0, 0, 0, tz), blocks)
+			}
+		</div>
+	</div>
+}

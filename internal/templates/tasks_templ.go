@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"algo-schedule/db"
+	"algo-schedule/internal/db"
 	"fmt"
 	"math"
 	"time"

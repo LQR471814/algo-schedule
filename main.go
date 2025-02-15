@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/signal"
 
-	"algo-schedule/db"
+	"algo-schedule/internal/db"
 
 	"github.com/lmittmann/tint"
 	_ "modernc.org/sqlite"

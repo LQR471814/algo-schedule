@@ -1,8 +1,8 @@
 package main
 
 import (
-	"algo-schedule/db"
-	"algo-schedule/templates"
+	"algo-schedule/internal/db"
+	"algo-schedule/internal/templates"
 	"fmt"
 	"net/http"
 	"net/url"
