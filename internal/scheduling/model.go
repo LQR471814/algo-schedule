@@ -1,16 +1,7 @@
 package scheduling
 
-import "time"
-
-type Size int
-
-const (
-	// 15 minutes
-	SIZE_SMALL Size = iota
-	// 30 minutes
-	SIZE_MED
-	// 60 minutes
-	SIZE_LARGE
+import (
+	"time"
 )
 
 type Difficulty int
@@ -34,8 +25,10 @@ type Quota struct {
 }
 
 type Task struct {
-	Name           string
-	Size           Size
+	Name string
+	// Size is an estimate of how long the task will take in minutes.
+	Size int
+	// Difficulty measures the decision making involved in this task.
 	Difficulty     Difficulty
 	TimeToDeadline time.Duration
 }
@@ -51,6 +44,15 @@ type TimeBlock struct {
 	Start, End time.Time
 }
 
-// func Schedule(input Input) []TimeBlock {
-//
-// }
+func Schedule(input Input) []TimeBlock {
+	blocks := make([]TimeBlock, len(input.Events))
+
+	for i, e := range input.Events {
+		blocks[i] = TimeBlock{
+			Name:  e.Name,
+			Start: e.Start,
+			End:   e.End,
+		}
+	}
+
+}

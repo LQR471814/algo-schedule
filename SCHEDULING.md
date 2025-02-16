@@ -41,6 +41,11 @@ the question then becomes: *what tasks should you spend willpower on, and how mu
 - people have a limited capacity to mitigate the effects of emotions on their person.
    - ex. a person who spends some emotional regulation capacity on staying calm in a meeting will have a harder time staying calm given further stressful situations.
 
+## sources of irrationality / intentional decision inaccuracy
+
+- when people have low decision-making capacity, they will actively choose to use heuristics and suffer an impact to decision accuracy in order to lower the effort in making the decision.
+- when people have to make a lot of decisions in rapid succession, they will also actively choose to use heuristics.
+
 ## realized concepts
 
 **decision-making capacity**
