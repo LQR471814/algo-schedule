@@ -3,6 +3,7 @@ package templates
 import (
 	"fmt"
 	"time"
+	"math"
 )
 
 type TimeBlock struct {
@@ -33,17 +34,12 @@ func renderBlocks(tz *time.Location, blocks []TimeBlock) []renderedDay {
 	}
 
 	start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, tz)
-	end = time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, tz)
-
-	for _, b := range blocks {
-		fmt.Println(b)
-	}
+	dayCount := int(math.Ceil(end.Sub(start).Hours() / 24))
 
 	var days []renderedDay
-	for dayStart := start; dayStart.Before(end); dayStart = dayStart.AddDate(0, 0, 1) {
+	for i := 0; i < dayCount; i++ {
+		dayStart := start.AddDate(0, 0, i)
 		dayEnd := dayStart.AddDate(0, 0, 1).Add(-time.Nanosecond)
-
-		fmt.Println(dayStart, dayEnd)
 
 		var dayblocks []renderedBlock
 		for _, b := range blocks {
@@ -89,7 +85,10 @@ templ Day(day renderedDay) {
 			</div>
 			for _, b := range day.Blocks {
 				{{ style := fmt.Sprintf("top: %f%%; height: %f%%", b.Start*100, (b.End-b.Start)*100) }}
-				<div class="absolute bg-red-500 left-0 w-full" { templ.Attributes{"style": style}... }>
+				<div
+					class="absolute bg-red-500 left-0 w-full rounded-sm shadow-lg p-1 border-red-600 border-b-1"
+					{ templ.Attributes{"style": style}... }
+				>
 					<p>{ b.Name }</p>
 				</div>
 			}
@@ -102,7 +101,7 @@ templ DayList(tz *time.Location, blocks []TimeBlock) {
 	if len(days) > 0 {
 		<div class="flex flex-col gap-3">
 			<h1 class="text-2xl font-bold">{ fmt.Sprint(days[0].Start.Month()) }</h1>
-			<div class="flex gap-3">
+			<div class="flex gap-2">
 				for _, d := range days {
 					@Day(d)
 				}

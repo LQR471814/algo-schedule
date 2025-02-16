@@ -76,11 +76,16 @@ func typicalWeek(now time.Time) []Event {
 	var events []Event
 
 	for i := range 7 {
+		sleepStart := time.Date(now.Year(), now.Month(), now.Day()+i-1, 21, 0, 0, 0, time.Local)
+		if i == 0 {
+			sleepStart = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+		}
+		sleepEnd := time.Date(now.Year(), now.Month(), now.Day()+i, 6, 30, 0, 0, time.Local)
 		events = append(events, Event{
 			Name:       "Sleep",
 			Difficulty: DIFFICULTY_LOW,
-			Start:      time.Date(now.Year(), now.Month(), now.Day()+i-1, 21, 0, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day()+i, 6, 30, 0, 0, time.Local),
+			Start:      sleepStart,
+			End:        sleepEnd,
 		})
 
 		today := time.Date(now.Year(), now.Month(), now.Day()+i, 0, 0, 0, 0, time.Local)
@@ -101,12 +106,6 @@ func typicalWeek(now time.Time) []Event {
 			End:        time.Date(now.Year(), now.Month(), now.Day()+i, 18, 15, 0, 0, time.Local),
 		})
 	}
-	events = append(events, Event{
-		Name:       "Sleep",
-		Difficulty: DIFFICULTY_LOW,
-		Start:      time.Date(now.Year(), now.Month(), now.Day()+6, 21, 0, 0, 0, time.Local),
-		End:        time.Date(now.Year(), now.Month(), now.Day()+7, 6, 30, 0, 0, time.Local),
-	})
 
 	return events
 }
