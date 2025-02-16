@@ -80,10 +80,10 @@ func typicalWeek(now time.Time) []Event {
 			Name:       "Sleep",
 			Difficulty: DIFFICULTY_LOW,
 			Start:      time.Date(now.Year(), now.Month(), now.Day()+i-1, 21, 0, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 6, 30, 0, 0, time.Local),
+			End:        time.Date(now.Year(), now.Month(), now.Day()+i, 6, 30, 0, 0, time.Local),
 		})
 
-		today := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local)
+		today := time.Date(now.Year(), now.Month(), now.Day()+i, 0, 0, 0, 0, time.Local)
 		var schoolEvents []Event
 		if i < 5 {
 			if i%2 == 0 {
@@ -214,9 +214,9 @@ func TestSchedule(t *testing.T) {
 		}
 	}
 
-	out, err := json.MarshalIndent(testInputs, "", "  ")
+	marshalled, err := json.Marshal(blocks)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(string(out))
+	fmt.Println(string(marshalled))
 }

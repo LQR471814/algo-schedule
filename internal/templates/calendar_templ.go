@@ -18,13 +18,73 @@ type TimeBlock struct {
 	Start, End time.Time
 }
 
-func (block TimeBlock) percentages(dayStart time.Time) (start, end float64) {
-	start = float64(block.Start.Sub(dayStart).Minutes()) / float64(24*60*time.Minute)
-	end = float64(block.End.Sub(dayStart).Minutes()) / float64(24*60*time.Minute)
-	return start, end
+type renderedBlock struct {
+	Name       string
+	Start, End float64
 }
 
-func Day(dayStart time.Time, blocks []TimeBlock) templ.Component {
+type renderedDay struct {
+	Start  time.Time
+	Blocks []renderedBlock
+}
+
+func renderBlocks(tz *time.Location, blocks []TimeBlock) []renderedDay {
+	start := time.Time{}
+	end := time.Time{}
+	for _, b := range blocks {
+		if start == (time.Time{}) || b.Start.Before(start) {
+			start = b.Start
+		}
+		if end == (time.Time{}) || b.End.After(end) {
+			end = b.End
+		}
+	}
+
+	start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, tz)
+	end = time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, tz)
+
+	for _, b := range blocks {
+		fmt.Println(b)
+	}
+
+	var days []renderedDay
+	for dayStart := start; dayStart.Before(end); dayStart = dayStart.AddDate(0, 0, 1) {
+		dayEnd := dayStart.AddDate(0, 0, 1).Add(-time.Nanosecond)
+
+		fmt.Println(dayStart, dayEnd)
+
+		var dayblocks []renderedBlock
+		for _, b := range blocks {
+			if b.Start.Before(dayStart) && b.End.Before(dayStart) {
+				continue
+			}
+			if b.Start.After(dayEnd) && b.End.After(dayEnd) {
+				continue
+			}
+
+			if b.Start.Before(dayStart) {
+				b.Start = dayStart
+			}
+			if b.End.After(dayEnd) {
+				b.End = dayEnd
+			}
+			dayblocks = append(dayblocks, renderedBlock{
+				Name:  b.Name,
+				Start: float64(b.Start.Sub(dayStart).Minutes()) / float64(24*60),
+				End:   float64(b.End.Sub(dayStart).Minutes()) / float64(24*60),
+			})
+		}
+
+		days = append(days, renderedDay{
+			Start:  dayStart,
+			Blocks: dayblocks,
+		})
+	}
+
+	return days
+}
+
+func Day(day renderedDay) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -45,32 +105,32 @@ func Day(dayStart time.Time, blocks []TimeBlock) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-3\"><h1>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-3 min-w-[180px]\"><h3 class=\"text-xl font-bold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(dayStart.Day()))
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(day.Start.Day()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/calendar.templ`, Line: 21, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/calendar.templ`, Line: 81, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h1><div class=\"relative fit-content\"><div class=\"flex flex-col w-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h3><div class=\"relative fit-content\"><div class=\"flex flex-col w-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for i := range 24 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"flex-1 border border-x-0 border-y-2 border-black w-full min-h-[100px]\"><p class=\"text-sm\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"flex-1 w-full min-h-[100px]\"><p class=\"text-sm\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(i + 1))
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/calendar.templ`, Line: 26, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/calendar.templ`, Line: 86, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -85,24 +145,9 @@ func Day(dayStart time.Time, blocks []TimeBlock) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, b := range blocks {
-			start, end := b.percentages(dayStart)
-			if start < 0 {
-				continue
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if end > 1 {
-				end = 1
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			style := fmt.Sprintf("top: %f%%; height: %f%%", start*100, (end-start)*100)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"absolute bg-red-500 left-0 w-full\"")
+		for _, b := range day.Blocks {
+			style := fmt.Sprintf("top: %f%%; height: %f%%", b.Start*100, (b.End-b.Start)*100)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"absolute bg-red-500 left-0 w-full\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -110,45 +155,30 @@ func Day(dayStart time.Time, blocks []TimeBlock) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "><p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "><p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(b.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/calendar.templ`, Line: 40, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/calendar.templ`, Line: 93, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		return nil
 	})
-}
-
-func blockBounds(blocks []TimeBlock) (start time.Time, days int) {
-	start = time.Time{}
-	end := time.Time{}
-	for _, b := range blocks {
-		if start == (time.Time{}) || b.Start.Before(start) {
-			start = b.Start
-		}
-		if end == (time.Time{}) || b.End.After(end) {
-			end = b.End
-		}
-	}
-	days = int(end.Sub(start).Hours()) / 24
-	return
 }
 
 func DayList(tz *time.Location, blocks []TimeBlock) templ.Component {
@@ -172,33 +202,35 @@ func DayList(tz *time.Location, blocks []TimeBlock) templ.Component {
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		start, days := blockBounds(blocks)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div class=\"flex flex-col gap-3\"><h1>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(start.Month()))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/calendar.templ`, Line: 65, Col: 33}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</h1><div class=\"flex gap-3\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		for i := range days {
-			templ_7745c5c3_Err = Day(time.Date(start.Year(), start.Month(), start.Day()+i, 0, 0, 0, 0, tz), blocks).Render(ctx, templ_7745c5c3_Buffer)
+		days := renderBlocks(tz, blocks)
+		if len(days) > 0 {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"flex flex-col gap-3\"><h1 class=\"text-2xl font-bold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(days[0].Start.Month()))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/calendar.templ`, Line: 104, Col: 69}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</h1><div class=\"flex gap-3\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, d := range days {
+				templ_7745c5c3_Err = Day(d).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return nil
 	})

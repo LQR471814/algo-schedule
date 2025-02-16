@@ -1,0 +1,15 @@
+package main
+
+templ UI() {
+	<form hx-post="/render" hx-target="#rendered" hx-swap="innerHTML">
+		<textarea
+			class="block"
+			name="timeblocks"
+			placeholder="json encoded time block data"
+			rows="10"
+			cols="120"
+		></textarea>
+		<button>Render</button>
+	</form>
+	<div id="rendered"></div>
+}

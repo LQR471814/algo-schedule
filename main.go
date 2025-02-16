@@ -13,17 +13,9 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func registerRoutes(qry *db.Queries, dev bool) {
+func registerRoutes(qry *db.Queries) {
 	router := Router{qry: qry}
 	router.Attach(http.DefaultServeMux)
-
-	if dev {
-		slog.Debug("-dev is enabled! serving assets from local folder")
-		fileserver := http.FileServer(http.FS(os.DirFS("./static")))
-		handler := http.StripPrefix("/static/", fileserver)
-		http.Handle("/static/{path...}", handler)
-		return
-	}
 	http.Handle("/static/{path...}", http.FileServer(http.FS(static)))
 }
 
@@ -41,11 +33,10 @@ func setupSlog(verbose bool) {
 
 func main() {
 	dbpath := flag.String("db", "database.db", "path to the database to use")
-	dev := flag.Bool("dev", false, "enable developer mode. (note: this will automatically enable verbose logging)")
 	verbose := flag.Bool("v", false, "enable verbose logging.")
 	flag.Parse()
 
-	setupSlog(*dev || *verbose)
+	setupSlog(*verbose)
 
 	database, err := OpenAndMigrateDB(db.Schema, *dbpath)
 	if err != nil {
@@ -55,7 +46,7 @@ func main() {
 	defer database.Close()
 	qry := db.New(database)
 
-	registerRoutes(qry, *dev)
+	registerRoutes(qry)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Kill)

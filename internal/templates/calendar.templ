@@ -10,42 +10,18 @@ type TimeBlock struct {
 	Start, End time.Time
 }
 
-func (block TimeBlock) percentages(dayStart time.Time) (start, end float64) {
-	start = float64(block.Start.Sub(dayStart).Minutes()) / float64(24*60*time.Minute)
-	end = float64(block.End.Sub(dayStart).Minutes()) / float64(24*60*time.Minute)
-	return start, end
+type renderedBlock struct {
+	Name       string
+	Start, End float64
 }
 
-templ Day(dayStart time.Time, blocks []TimeBlock) {
-	<div class="flex flex-col gap-3">
-		<h1>{ fmt.Sprint(dayStart.Day()) }</h1>
-		<div class="relative fit-content">
-			<div class="flex flex-col w-full">
-				for i := range 24 {
-					<div class="flex-1 border border-x-0 border-y-2 border-black w-full min-h-[100px]">
-						<p class="text-sm">{ fmt.Sprint(i+1) }</p>
-					</div>
-				}
-			</div>
-			for _, b := range blocks {
-				{{ start, end := b.percentages(dayStart) }}
-				if start < 0 {
-					{{ continue }}
-				}
-				if end > 1 {
-					{{ end = 1 }}
-				}
-				{{ style := fmt.Sprintf("top: %f%%; height: %f%%", start*100, (end-start)*100) }}
-				<div class="absolute bg-red-500 left-0 w-full" { templ.Attributes{"style": style}... }>
-					<p>{ b.Name }</p>
-				</div>
-			}
-		</div>
-	</div>
+type renderedDay struct {
+	Start  time.Time
+	Blocks []renderedBlock
 }
 
-func blockBounds(blocks []TimeBlock) (start time.Time, days int) {
-	start = time.Time{}
+func renderBlocks(tz *time.Location, blocks []TimeBlock) []renderedDay {
+	start := time.Time{}
 	end := time.Time{}
 	for _, b := range blocks {
 		if start == (time.Time{}) || b.Start.Before(start) {
@@ -55,18 +31,82 @@ func blockBounds(blocks []TimeBlock) (start time.Time, days int) {
 			end = b.End
 		}
 	}
-	days = int(end.Sub(start).Hours()) / 24
-	return
+
+	start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, tz)
+	end = time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, tz)
+
+	for _, b := range blocks {
+		fmt.Println(b)
+	}
+
+	var days []renderedDay
+	for dayStart := start; dayStart.Before(end); dayStart = dayStart.AddDate(0, 0, 1) {
+		dayEnd := dayStart.AddDate(0, 0, 1).Add(-time.Nanosecond)
+
+		fmt.Println(dayStart, dayEnd)
+
+		var dayblocks []renderedBlock
+		for _, b := range blocks {
+			if b.Start.Before(dayStart) && b.End.Before(dayStart) {
+				continue
+			}
+			if b.Start.After(dayEnd) && b.End.After(dayEnd) {
+				continue
+			}
+
+			if b.Start.Before(dayStart) {
+				b.Start = dayStart
+			}
+			if b.End.After(dayEnd) {
+				b.End = dayEnd
+			}
+			dayblocks = append(dayblocks, renderedBlock{
+				Name:  b.Name,
+				Start: float64(b.Start.Sub(dayStart).Minutes()) / float64(24*60),
+				End:   float64(b.End.Sub(dayStart).Minutes()) / float64(24*60),
+			})
+		}
+
+		days = append(days, renderedDay{
+			Start:  dayStart,
+			Blocks: dayblocks,
+		})
+	}
+
+	return days
 }
 
-templ DayList(tz *time.Location, blocks []TimeBlock) {
-	{{ start, days := blockBounds(blocks) }}
-	<div class="flex flex-col gap-3">
-		<h1>{ fmt.Sprint(start.Month()) }</h1>
-		<div class="flex gap-3">
-			for i := range days {
-				@Day(time.Date(start.Year(), start.Month(), start.Day()+i, 0, 0, 0, 0, tz), blocks)
+templ Day(day renderedDay) {
+	<div class="flex flex-col gap-3 min-w-[180px]">
+		<h3 class="text-xl font-bold">{ fmt.Sprint(day.Start.Day()) }</h3>
+		<div class="relative fit-content">
+			<div class="flex flex-col w-full">
+				for i := range 24 {
+					<div class="flex-1 w-full min-h-[100px]">
+						<p class="text-sm">{ fmt.Sprint(i) }</p>
+					</div>
+				}
+			</div>
+			for _, b := range day.Blocks {
+				{{ style := fmt.Sprintf("top: %f%%; height: %f%%", b.Start*100, (b.End-b.Start)*100) }}
+				<div class="absolute bg-red-500 left-0 w-full" { templ.Attributes{"style": style}... }>
+					<p>{ b.Name }</p>
+				</div>
 			}
 		</div>
 	</div>
+}
+
+templ DayList(tz *time.Location, blocks []TimeBlock) {
+	{{ days := renderBlocks(tz, blocks) }}
+	if len(days) > 0 {
+		<div class="flex flex-col gap-3">
+			<h1 class="text-2xl font-bold">{ fmt.Sprint(days[0].Start.Month()) }</h1>
+			<div class="flex gap-3">
+				for _, d := range days {
+					@Day(d)
+				}
+			</div>
+		</div>
+	}
 }
