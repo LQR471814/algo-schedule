@@ -23,7 +23,7 @@ type Reservable struct {
 }
 
 func (e Reservable) leeway() int {
-	return int(e.MaxEnd.Sub(e.MinStart).Minutes())
+	return int(e.MaxEnd.Sub(e.MinStart).Minutes()) - e.Duration
 }
 
 type TimeBlock struct {
@@ -49,25 +49,20 @@ type Input struct {
 }
 
 func Schedule(input Input) ([]ScheduleBlock, []error) {
-	for i, r := range input.Reservables {
-		if r.MinStart.Before(input.Now) {
-			input.Reservables[i].MinStart = input.Now
-		}
-	}
-
 	slices.SortFunc(input.Reservables, func(a, b Reservable) int {
+		// schedule highest priority first
 		if a.Priority < b.Priority {
-			return -1
+			return 1
 		}
 		if a.Priority > b.Priority {
-			return 1
+			return -1
 		}
 		return a.leeway() - b.leeway()
 	})
 
 	blocks := make([]ScheduleBlock, 0, len(input.Reservables))
 	for i, r := range input.Reservables {
-		if r.leeway() > 0 {
+		if r.leeway() != 0 {
 			continue
 		}
 		blocks = append(blocks, ScheduleBlock{
@@ -79,41 +74,50 @@ func Schedule(input Input) ([]ScheduleBlock, []error) {
 		})
 	}
 
+	slices.SortFunc(blocks, func(a, b ScheduleBlock) int {
+		return a.End.Compare(b.End)
+	})
 	cursor := input.Now
 	var freeTime []TimeBlock
-	for _, r := range input.Reservables {
-		if r.leeway() > 0 {
+	for _, b := range blocks {
+		freeMins := int(b.End.Sub(cursor).Minutes())
+		if freeMins <= 0 {
 			continue
 		}
-		freeMins := int(r.MinStart.Sub(cursor).Minutes())
-		if freeMins > 0 {
-			freeTime = append(freeTime, TimeBlock{
-				Start: cursor,
-				End:   r.MinStart,
-			})
-		}
-		cursor = r.MaxEnd
+		freeTime = append(freeTime, TimeBlock{
+			Start: cursor,
+			End:   b.Start,
+		})
+		cursor = b.End
 	}
 	freeTime = append(freeTime, TimeBlock{
 		Start: cursor,
 		// this is the maximum unix time
 		End: time.Unix(1<<63-62135596801, 999999999),
 	})
+	for _, t := range freeTime {
+		fmt.Println(t.Start.Format(time.DateTime), t.End.Format(time.DateTime))
+	}
 
 	var errors []error
 	for ri, r := range input.Reservables {
+		if r.leeway() == 0 {
+			continue
+		}
+
 		// add inbetween the calendar events (where there is free space)
 		for i, free := range freeTime {
 			start := free.Start
 			if free.Start.Before(r.MinStart) {
 				start = r.MinStart
 			}
-			freeMins := int(free.End.Sub(start))
-			if freeMins < r.Duration {
+			freeMins := free.End.Sub(start)
+			if freeMins < time.Duration(r.Duration)*time.Minute {
 				continue
 			}
 
 			end := start.Add(time.Duration(r.Duration) * time.Minute)
+			fmt.Println("schedule", r.Name, r.Duration, "|", start.Format(time.DateTime), "|", end.Format(time.DateTime))
 			blocks = append(blocks, ScheduleBlock{
 				TimeBlock: TimeBlock{
 					Start: start,
@@ -158,7 +162,7 @@ func Schedule(input Input) ([]ScheduleBlock, []error) {
 
 func Event(name string, start, end time.Time) Reservable {
 	return Reservable{
-		Name:     name,
+		Name:     fmt.Sprintf("Event: %s", name),
 		Priority: PRIORITY_MUST_EXIST,
 		MinStart: start,
 		MaxEnd:   end,
@@ -168,7 +172,7 @@ func Event(name string, start, end time.Time) Reservable {
 
 func Task(name string, priority Priority, duration int, deadline time.Time) Reservable {
 	return Reservable{
-		Name:     name,
+		Name:     fmt.Sprintf("Task: %s", name),
 		Priority: priority,
 		MinStart: time.Time{},
 		MaxEnd:   deadline,

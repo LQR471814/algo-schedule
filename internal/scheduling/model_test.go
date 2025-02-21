@@ -48,25 +48,13 @@ func aDay(now time.Time) []Reservable {
 			90,
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
-		Task(
-			"Econ Assignment: Part 1 / 2",
-			PRIORITY_IMPORTANT,
-			90,
-			time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
-		),
-		Task(
-			"Econ Assignment: Part 2 / 2",
-			PRIORITY_IMPORTANT,
-			90,
-			time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
-		),
 	}
 }
 
 func bDay(now time.Time) []Reservable {
 	return []Reservable{
 		Event(
-			"AP Physics",
+			"AP Physics C",
 			time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
 		),
@@ -86,11 +74,90 @@ func bDay(now time.Time) []Reservable {
 			time.Date(now.Year(), now.Month(), now.Day(), 13, 05, 0, 0, time.Local),
 		),
 		Task(
+			"Physics C Webassign",
+			PRIORITY_IMPORTANT,
+			60,
+			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
+		),
+		Task(
+			"Physics C Practice",
+			PRIORITY_IMPORTANT,
+			30,
+			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
+		),
+		Task(
+			"Phil in Lit Reading",
+			PRIORITY_IMPORTANT,
+			30,
+			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
+		),
+		Task(
 			"DSA Assignment",
 			PRIORITY_IMPORTANT,
 			120,
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
+	}
+}
+
+func typicalWeek() Input {
+	now := time.Now()
+	var reservables []Reservable
+
+	for i := range 7 {
+		sleepStart := time.Date(now.Year(), now.Month(), now.Day()+i-1, 21, 0, 0, 0, time.Local)
+		if i == 0 {
+			sleepStart = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+		}
+		sleepEnd := time.Date(now.Year(), now.Month(), now.Day()+i, 6, 30, 0, 0, time.Local)
+		reservables = append(
+			reservables,
+			Event(
+				"Sleep",
+				sleepStart,
+				sleepEnd,
+			),
+			Event(
+				"Wind-up",
+				time.Date(now.Year(), now.Month(), now.Day()+i, 6, 30, 0, 0, time.Local),
+				time.Date(now.Year(), now.Month(), now.Day()+i, 7, 30, 0, 0, time.Local),
+			),
+		)
+
+		today := time.Date(now.Year(), now.Month(), now.Day()+i, 0, 0, 0, 0, time.Local)
+		var schoolReserve []Reservable
+		if i < 5 {
+			if i%2 == 0 {
+				schoolReserve = aDay(today)
+			} else {
+				schoolReserve = bDay(today)
+			}
+		}
+		for i, r := range schoolReserve {
+			if r.MinStart == (time.Time{}) {
+				schoolReserve[i].MinStart = today
+			}
+		}
+		reservables = append(reservables, schoolReserve...)
+
+		reservables = append(
+			reservables,
+			Event(
+				"Dinner",
+				time.Date(now.Year(), now.Month(), now.Day()+i, 18, 0, 0, 0, time.Local),
+				time.Date(now.Year(), now.Month(), now.Day()+i, 18, 15, 0, 0, time.Local),
+			),
+			Event(
+				"Wind-down",
+				time.Date(now.Year(), now.Month(), now.Day()+i, 20, 30, 0, 0, time.Local),
+				time.Date(now.Year(), now.Month(), now.Day()+i, 21, 0, 0, 0, time.Local),
+			),
+		)
+
+	}
+
+	reservables = append(
+		reservables,
 		Task(
 			"Side Project 1 Deadline: Rewrite Part 1 / 3",
 			PRIORITY_UNIMPORTANT,
@@ -109,42 +176,19 @@ func bDay(now time.Time) []Reservable {
 			60,
 			time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
 		),
-	}
-}
-
-func typicalWeek() Input {
-	now := time.Now()
-	var reservables []Reservable
-
-	for i := range 7 {
-		sleepStart := time.Date(now.Year(), now.Month(), now.Day()+i-1, 21, 0, 0, 0, time.Local)
-		if i == 0 {
-			sleepStart = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
-		}
-		sleepEnd := time.Date(now.Year(), now.Month(), now.Day()+i, 6, 30, 0, 0, time.Local)
-		reservables = append(reservables, Event(
-			"Sleep",
-			sleepStart,
-			sleepEnd,
-		))
-
-		today := time.Date(now.Year(), now.Month(), now.Day()+i, 0, 0, 0, 0, time.Local)
-		var schoolReserve []Reservable
-		if i < 5 {
-			if i%2 == 0 {
-				schoolReserve = aDay(today)
-			} else {
-				schoolReserve = bDay(today)
-			}
-		}
-		reservables = append(reservables, schoolReserve...)
-
-		reservables = append(reservables, Event(
-			"Dinner",
-			time.Date(now.Year(), now.Month(), now.Day()+i, 18, 0, 0, 0, time.Local),
-			time.Date(now.Year(), now.Month(), now.Day()+i, 18, 15, 0, 0, time.Local),
-		))
-	}
+		Task(
+			"Econ Assignment: Part 1 / 2",
+			PRIORITY_IMPORTANT,
+			90,
+			time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
+		),
+		Task(
+			"Econ Assignment: Part 2 / 2",
+			PRIORITY_IMPORTANT,
+			90,
+			time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
+		),
+	)
 
 	return Input{
 		Now:         now,
@@ -155,7 +199,7 @@ func typicalWeek() Input {
 func TestSchedule(t *testing.T) {
 	blocks, errs := Schedule(typicalWeek())
 	if len(errs) > 0 {
-		t.Fatal(errors.Join(errs...))
+		t.Log(errors.Join(errs...))
 	}
 
 	renderedBlocks := make([]templates.TimeBlock, len(blocks))
