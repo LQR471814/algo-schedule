@@ -6,13 +6,33 @@ import (
 	"time"
 )
 
+type Color int
+
+const (
+COLOR_GRAY Color = iota
+	COLOR_GREEN 
+	COLOR_RED
+)
+
+func (c Color) Class() string {
+	switch c {
+	case COLOR_GREEN:
+		return "bg-green-400 border-green-500"
+	case COLOR_RED:
+		return "bg-red-400 border-red-500"
+	}
+	return "bg-gray-400 border-gray-500"
+}
+
 type TimeBlock struct {
 	Name       string
+	Color      Color
 	Start, End time.Time
 }
 
 type renderedBlock struct {
 	Name       string
+	Color      Color
 	Start, End float64
 }
 
@@ -58,6 +78,7 @@ func renderBlocks(tz *time.Location, blocks []TimeBlock) []renderedDay {
 			}
 			dayblocks = append(dayblocks, renderedBlock{
 				Name:  b.Name,
+				Color: b.Color,
 				Start: float64(b.Start.Sub(dayStart).Minutes()) / float64(24*60),
 				End:   float64(b.End.Sub(dayStart).Minutes()) / float64(24*60),
 			})
@@ -86,10 +107,10 @@ templ Day(day renderedDay) {
 			for _, b := range day.Blocks {
 				{{ style := fmt.Sprintf("top: %f%%; height: %f%%", b.Start*100, (b.End-b.Start)*100) }}
 				<div
-					class="absolute bg-red-500 left-0 w-full rounded-sm shadow-lg p-1 border-red-600 border-b-1"
+					class={"absolute left-0 w-full rounded-sm shadow-lg p-1 border-b-1", b.Color.Class()}
 					{ templ.Attributes{"style": style}... }
 				>
-					<p>{ b.Name }</p>
+					<p class="text-sm">{ b.Name }</p>
 				</div>
 			}
 		</div>

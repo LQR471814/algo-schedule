@@ -5,9 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
+
+func assignment(name string, priority Priority, duration int, assigned, deadline time.Time) Reservable {
+	r := Task(name, priority, duration, deadline)
+	r.MinStart = assigned
+	return r
+}
 
 func aDay(now time.Time) []Reservable {
 	return []Reservable{
@@ -36,16 +43,18 @@ func aDay(now time.Time) []Reservable {
 			time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, time.Local),
 		),
-		Task(
+		assignment(
 			"AP Stats Webassign",
 			PRIORITY_IMPORTANT,
 			60,
+			time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
-		Task(
+		assignment(
 			"Multi Webassign",
 			PRIORITY_IMPORTANT,
 			90,
+			time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
 	}
@@ -73,35 +82,45 @@ func bDay(now time.Time) []Reservable {
 			time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day(), 13, 05, 0, 0, time.Local),
 		),
-		Task(
+		assignment(
 			"Physics C Webassign",
 			PRIORITY_IMPORTANT,
 			60,
+			time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
-		Task(
+		assignment(
 			"Physics C Practice",
 			PRIORITY_IMPORTANT,
 			30,
+			time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
-		Task(
+		assignment(
 			"Phil in Lit Reading",
 			PRIORITY_IMPORTANT,
 			30,
+			time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
-		Task(
+		assignment(
 			"DSA Assignment",
 			PRIORITY_IMPORTANT,
 			120,
+			time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
 	}
 }
 
-func typicalWeek() Input {
+func nextMonday() time.Time {
 	now := time.Now()
+	offset := -int(now.Weekday() - time.Monday)
+	return time.Date(now.Year(), now.Month(), now.Day()+7+offset, 0, 0, 0, 0, time.Local)
+}
+
+func typicalWeek() Input {
+	now := nextMonday()
 	var reservables []Reservable
 
 	for i := range 7 {
@@ -204,8 +223,16 @@ func TestSchedule(t *testing.T) {
 
 	renderedBlocks := make([]templates.TimeBlock, len(blocks))
 	for i, b := range blocks {
+		var color templates.Color
+		if strings.HasPrefix(b.Reservable.Name, "Event") {
+			color = templates.COLOR_RED
+		} else if strings.HasPrefix(b.Reservable.Name, "Task") {
+			color = templates.COLOR_GREEN
+		}
+
 		renderedBlocks[i] = templates.TimeBlock{
 			Name:  b.Reservable.Name,
+			Color: color,
 			Start: b.Start,
 			End:   b.End,
 		}
