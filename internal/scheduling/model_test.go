@@ -3,77 +3,121 @@ package scheduling
 import (
 	"algo-schedule/internal/templates"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 )
 
-func aDay(now time.Time) []Event {
+func aDay(now time.Time) ([]Event, []Task) {
 	return []Event{
-		{
-			Name:       "AP Statistics",
-			Difficulty: DIFFICULTY_MEDIUM,
-			Start:      time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
-		},
-		{
-			Name:       "AP Microeconomics",
-			Difficulty: DIFFICULTY_MEDIUM,
-			Start:      time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
-		},
-		{
-			Name:       "Multi-Variable Calculus (H)",
-			Difficulty: DIFFICULTY_LOW,
-			Start:      time.Date(now.Year(), now.Month(), now.Day(), 10, 55, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
-		},
-		{
-			Name:       "Lunch",
-			Difficulty: DIFFICULTY_LOW,
-			Start:      time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 12, 30, 0, 0, time.Local),
-		},
-		{
-			Name:       "World Religions",
-			Difficulty: DIFFICULTY_LOW,
-			Start:      time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, time.Local),
-		},
-	}
+			{
+				Name:  "AP Statistics",
+				Start: time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
+				End:   time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
+			},
+			{
+				Name:  "AP Microeconomics",
+				Start: time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
+				End:   time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
+			},
+			{
+				Name:  "Multi-Variable Calculus (H)",
+				Start: time.Date(now.Year(), now.Month(), now.Day(), 10, 55, 0, 0, time.Local),
+				End:   time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
+			},
+			{
+				Name:  "Lunch",
+				Start: time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
+				End:   time.Date(now.Year(), now.Month(), now.Day(), 12, 30, 0, 0, time.Local),
+			},
+			{
+				Name:  "World Religions",
+				Start: time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
+				End:   time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, time.Local),
+			},
+		}, []Task{
+			{
+				Name:     "AP Stats Webassign",
+				Duration: 60,
+				Priority: PRIORITY_IMPORTANT,
+				Deadline: time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
+			},
+			{
+				Name:     "Multi Webassign",
+				Duration: 90,
+				Priority: PRIORITY_IMPORTANT,
+				Deadline: time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
+			},
+			{
+				Name:     "Econ Assignment: Part 1 / 2",
+				Duration: 90,
+				Priority: PRIORITY_IMPORTANT,
+				Deadline: time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
+			},
+			{
+				Name:     "Econ Assignment: Part 2 / 2",
+				Duration: 90,
+				Priority: PRIORITY_IMPORTANT,
+				Deadline: time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
+			},
+		}
 }
 
-func bDay(now time.Time) []Event {
+func bDay(now time.Time) ([]Event, []Task) {
 	return []Event{
-		{
-			Name:       "AP Physics",
-			Difficulty: DIFFICULTY_MEDIUM,
-			Start:      time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
-		},
-		{
-			Name:       "Philosophy in Literature (H)",
-			Difficulty: DIFFICULTY_MEDIUM,
-			Start:      time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
-		},
-		{
-			Name:       "Data Structures and Algorithms (H)",
-			Difficulty: DIFFICULTY_LOW,
-			Start:      time.Date(now.Year(), now.Month(), now.Day(), 11, 30, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
-		},
-		{
-			Name:       "Lunch",
-			Difficulty: DIFFICULTY_LOW,
-			Start:      time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day(), 13, 05, 0, 0, time.Local),
-		},
-	}
+			{
+				Name:  "AP Physics",
+				Start: time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
+				End:   time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
+			},
+			{
+				Name:  "Philosophy in Literature (H)",
+				Start: time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
+				End:   time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
+			},
+			{
+				Name:  "Data Structures and Algorithms (H)",
+				Start: time.Date(now.Year(), now.Month(), now.Day(), 11, 30, 0, 0, time.Local),
+				End:   time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
+			},
+			{
+				Name:  "Lunch",
+				Start: time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
+				End:   time.Date(now.Year(), now.Month(), now.Day(), 13, 05, 0, 0, time.Local),
+			},
+		}, []Task{
+			{
+				Name:     "DSA Assignment",
+				Duration: 120,
+				Deadline: time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
+				Priority: PRIORITY_IMPORTANT,
+			},
+			{
+				Name:     "Side Project 1 Deadline: Rewrite Part 1 / 3",
+				Duration: 60,
+				Deadline: time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
+				Priority: PRIORITY_UNIMPORTANT,
+			},
+			{
+				Name:     "Side Project 1 Deadline: Rewrite Part 2 / 3",
+				Duration: 60,
+				Deadline: time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
+				Priority: PRIORITY_UNIMPORTANT,
+			},
+			{
+				Name:     "Side Project 1 Deadline: Rewrite Part 3 / 3",
+				Duration: 60,
+				Deadline: time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
+				Priority: PRIORITY_UNIMPORTANT,
+			},
+		}
 }
 
-func typicalWeek(now time.Time) []Event {
+func typicalWeek() Input {
+	now := time.Now()
 	var events []Event
+	var tasks []Task
 
 	for i := range 7 {
 		sleepStart := time.Date(now.Year(), now.Month(), now.Day()+i-1, 21, 0, 0, 0, time.Local)
@@ -82,138 +126,60 @@ func typicalWeek(now time.Time) []Event {
 		}
 		sleepEnd := time.Date(now.Year(), now.Month(), now.Day()+i, 6, 30, 0, 0, time.Local)
 		events = append(events, Event{
-			Name:       "Sleep",
-			Difficulty: DIFFICULTY_LOW,
-			Start:      sleepStart,
-			End:        sleepEnd,
+			Name:  "Sleep",
+			Start: sleepStart,
+			End:   sleepEnd,
 		})
 
 		today := time.Date(now.Year(), now.Month(), now.Day()+i, 0, 0, 0, 0, time.Local)
 		var schoolEvents []Event
+		var schoolTasks []Task
 		if i < 5 {
 			if i%2 == 0 {
-				schoolEvents = aDay(today)
+				schoolEvents, schoolTasks = aDay(today)
 			} else {
-				schoolEvents = bDay(today)
+				schoolEvents, schoolTasks = bDay(today)
 			}
 		}
 		events = append(events, schoolEvents...)
+		tasks = append(tasks, schoolTasks...)
 
 		events = append(events, Event{
-			Name:       "Dinner",
-			Difficulty: DIFFICULTY_LOW,
-			Start:      time.Date(now.Year(), now.Month(), now.Day()+i, 18, 0, 0, 0, time.Local),
-			End:        time.Date(now.Year(), now.Month(), now.Day()+i, 18, 15, 0, 0, time.Local),
+			Name:  "Dinner",
+			Start: time.Date(now.Year(), now.Month(), now.Day()+i, 18, 0, 0, 0, time.Local),
+			End:   time.Date(now.Year(), now.Month(), now.Day()+i, 18, 15, 0, 0, time.Local),
 		})
 	}
 
-	return events
-}
-
-var testInputs []Input = []Input{
-	{
-		Events: typicalWeek(time.Now()),
-		Quotas: []Quota{
-			{
-				Name:       "Read",
-				Duration:   time.Minute * 30,
-				Difficulty: DIFFICULTY_MEDIUM,
-			},
-		},
-		Tasks: []Task{
-			{
-				Name:           "AP Stats Webassign",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 2,
-			},
-			{
-				Name:           "Multi Webassign",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 2,
-			},
-			{
-				Name:           "DSA Assignment",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_MEDIUM,
-				TimeToDeadline: time.Hour * 24 * 2,
-			},
-			{
-				Name:           "Econ Assignment: Part 1 / 2",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 8,
-			},
-			{
-				Name:           "Econ Assignment: Part 2 / 2",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 8,
-			},
-			{
-				Name:           "Bible Project: Part 1 / 6",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 7,
-			},
-			{
-				Name:           "Bible Project: Part 2 / 6",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 7,
-			},
-			{
-				Name:           "Bible Project: Part 3 / 6",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 7,
-			},
-			{
-				Name:           "Bible Project: Part 4 / 6",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 7,
-			},
-			{
-				Name:           "Bible Project: Part 5 / 6",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 7,
-			},
-			{
-				Name:           "Bible Project: Part 6 / 6",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_HIGH,
-				TimeToDeadline: time.Hour * 24 * 7,
-			},
-			{
-				Name:           "Side Project 1 Deadline: Rewrite Part 1 / 3",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_MEDIUM,
-				TimeToDeadline: time.Hour * 24 * 14,
-			},
-			{
-				Name:           "Side Project 1 Deadline: Rewrite Part 1 / 3",
-				Size:           SIZE_LARGE,
-				Difficulty:     DIFFICULTY_MEDIUM,
-				TimeToDeadline: time.Hour * 24 * 14,
-			},
-		},
-	},
+	return Input{
+		Now:    now,
+		Events: events,
+		Tasks:  tasks,
+	}
 }
 
 func TestSchedule(t *testing.T) {
-	var blocks = make([]templates.TimeBlock, len(testInputs[0].Events))
-	for i, e := range testInputs[0].Events {
-		blocks[i] = templates.TimeBlock{
-			Name:  e.Name,
-			Start: e.Start,
-			End:   e.End,
+	blocks, errs := Schedule(typicalWeek())
+	if len(errs) > 0 {
+		t.Fatal(errors.Join(errs...))
+	}
+
+	renderedBlocks := make([]templates.TimeBlock, len(blocks))
+	for i, b := range blocks {
+		var name string
+		if b.Event != nil {
+			name = b.Event.Name
+		} else {
+			name = b.Task.Name
+		}
+		renderedBlocks[i] = templates.TimeBlock{
+			Name:  name,
+			Start: b.Start,
+			End:   b.End,
 		}
 	}
 
-	marshalled, err := json.Marshal(blocks)
+	marshalled, err := json.Marshal(renderedBlocks)
 	if err != nil {
 		t.Fatal(err)
 	}
