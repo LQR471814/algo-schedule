@@ -9,82 +9,101 @@ import (
 	"time"
 )
 
-func aDay(now time.Time) ([]Event, []Task) {
-	return []Event{
-			{
-				Name:  "AP Statistics",
-				Start: time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
-				End:   time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
-			},
-			{
-				Name:  "AP Microeconomics",
-				Start: time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
-				End:   time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
-			},
-			{
-				Name:  "Multi-Variable Calculus (H)",
-				Start: time.Date(now.Year(), now.Month(), now.Day(), 10, 55, 0, 0, time.Local),
-				End:   time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
-			},
-			{
-				Name:  "Lunch",
-				Start: time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
-				End:   time.Date(now.Year(), now.Month(), now.Day(), 12, 30, 0, 0, time.Local),
-			},
-			{
-				Name:  "World Religions",
-				Start: time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
-				End:   time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, time.Local),
-			},
-		}, []Task{
-			{
-				Name:     "AP Stats Webassign",
-				Duration: 60,
-				Priority: PRIORITY_IMPORTANT,
-				Deadline: time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
-			},
-			{
-				Name:     "Multi Webassign",
-				Duration: 90,
-				Priority: PRIORITY_IMPORTANT,
-				Deadline: time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
-			},
-			{
-				Name:     "Econ Assignment: Part 1 / 2",
-				Duration: 90,
-				Priority: PRIORITY_IMPORTANT,
-				Deadline: time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
-			},
-			{
-				Name:     "Econ Assignment: Part 2 / 2",
-				Duration: 90,
-				Priority: PRIORITY_IMPORTANT,
-				Deadline: time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
-			},
-		}
+func event(name string, start, end time.Time) Event {
+	return Event{
+		Name:     name,
+		Priority: PRIORITY_MUST_EXIST,
+		MinStart: start,
+		MaxEnd:   end,
+		Duration: int(end.Sub(start).Minutes()),
+	}
 }
 
-func bDay(now time.Time) ([]Event, []Task) {
+func task(name string, priority Priority, duration int, deadline time.Time) Event {
+	return Event{
+		Name:     name,
+		Priority: priority,
+		MinStart: time.Time{},
+		MaxEnd:   deadline,
+		Duration: duration,
+	}
+}
+
+func aDay(now time.Time) []Event {
+	return []Event{
+		event(
+			"AP Statistics",
+			time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
+		),
+		event(
+			"AP Microeconomics",
+			time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
+		),
+		event(
+			"Multi-Variable Calculus (H)",
+			time.Date(now.Year(), now.Month(), now.Day(), 10, 55, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
+		),
+		event(
+			"Lunch",
+			time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day(), 12, 30, 0, 0, time.Local),
+		),
+		event(
+			"World Religions",
+			time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, time.Local),
+		),
+		task(
+			"AP Stats Webassign",
+			PRIORITY_IMPORTANT,
+			60,
+			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
+		),
+		task(
+			"Multi Webassign",
+			PRIORITY_IMPORTANT,
+			90,
+			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
+		),
+		task(
+			"Econ Assignment: Part 1 / 2",
+			PRIORITY_IMPORTANT,
+			90,
+			time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
+		),
+		task(
+			"Econ Assignment: Part 2 / 2",
+			PRIORITY_IMPORTANT,
+			90,
+			time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
+		),
+	}
+}
+
+func bDay(now time.Time) []Event {
 	return []Event{
 			{
-				Name:  "AP Physics",
-				Start: time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
-				End:   time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
+				Name:     "AP Physics",
+				MinStart: time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
+				MaxEnd:   time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
 			},
 			{
-				Name:  "Philosophy in Literature (H)",
-				Start: time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
-				End:   time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
+				Name:     "Philosophy in Literature (H)",
+				MinStart: time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
+				MaxEnd:   time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
 			},
 			{
-				Name:  "Data Structures and Algorithms (H)",
-				Start: time.Date(now.Year(), now.Month(), now.Day(), 11, 30, 0, 0, time.Local),
-				End:   time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
+				Name:     "Data Structures and Algorithms (H)",
+				MinStart: time.Date(now.Year(), now.Month(), now.Day(), 11, 30, 0, 0, time.Local),
+				MaxEnd:   time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
 			},
 			{
-				Name:  "Lunch",
-				Start: time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
-				End:   time.Date(now.Year(), now.Month(), now.Day(), 13, 05, 0, 0, time.Local),
+				Name:     "Lunch",
+				MinStart: time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
+				MaxEnd:   time.Date(now.Year(), now.Month(), now.Day(), 13, 05, 0, 0, time.Local),
 			},
 		}, []Task{
 			{
@@ -126,9 +145,9 @@ func typicalWeek() Input {
 		}
 		sleepEnd := time.Date(now.Year(), now.Month(), now.Day()+i, 6, 30, 0, 0, time.Local)
 		events = append(events, Event{
-			Name:  "Sleep",
-			Start: sleepStart,
-			End:   sleepEnd,
+			Name:     "Sleep",
+			MinStart: sleepStart,
+			MaxEnd:   sleepEnd,
 		})
 
 		today := time.Date(now.Year(), now.Month(), now.Day()+i, 0, 0, 0, 0, time.Local)
@@ -145,9 +164,9 @@ func typicalWeek() Input {
 		tasks = append(tasks, schoolTasks...)
 
 		events = append(events, Event{
-			Name:  "Dinner",
-			Start: time.Date(now.Year(), now.Month(), now.Day()+i, 18, 0, 0, 0, time.Local),
-			End:   time.Date(now.Year(), now.Month(), now.Day()+i, 18, 15, 0, 0, time.Local),
+			Name:     "Dinner",
+			MinStart: time.Date(now.Year(), now.Month(), now.Day()+i, 18, 0, 0, 0, time.Local),
+			MaxEnd:   time.Date(now.Year(), now.Month(), now.Day()+i, 18, 15, 0, 0, time.Local),
 		})
 	}
 
