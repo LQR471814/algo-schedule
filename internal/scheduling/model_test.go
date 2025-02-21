@@ -9,72 +9,52 @@ import (
 	"time"
 )
 
-func event(name string, start, end time.Time) Event {
-	return Event{
-		Name:     name,
-		Priority: PRIORITY_MUST_EXIST,
-		MinStart: start,
-		MaxEnd:   end,
-		Duration: int(end.Sub(start).Minutes()),
-	}
-}
-
-func task(name string, priority Priority, duration int, deadline time.Time) Event {
-	return Event{
-		Name:     name,
-		Priority: priority,
-		MinStart: time.Time{},
-		MaxEnd:   deadline,
-		Duration: duration,
-	}
-}
-
-func aDay(now time.Time) []Event {
-	return []Event{
-		event(
+func aDay(now time.Time) []Reservable {
+	return []Reservable{
+		Event(
 			"AP Statistics",
 			time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
 		),
-		event(
+		Event(
 			"AP Microeconomics",
 			time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
 		),
-		event(
+		Event(
 			"Multi-Variable Calculus (H)",
 			time.Date(now.Year(), now.Month(), now.Day(), 10, 55, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
 		),
-		event(
+		Event(
 			"Lunch",
 			time.Date(now.Year(), now.Month(), now.Day(), 12, 10, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day(), 12, 30, 0, 0, time.Local),
 		),
-		event(
+		Event(
 			"World Religions",
 			time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
 			time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, time.Local),
 		),
-		task(
+		Task(
 			"AP Stats Webassign",
 			PRIORITY_IMPORTANT,
 			60,
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
-		task(
+		Task(
 			"Multi Webassign",
 			PRIORITY_IMPORTANT,
 			90,
 			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
 		),
-		task(
+		Task(
 			"Econ Assignment: Part 1 / 2",
 			PRIORITY_IMPORTANT,
 			90,
 			time.Date(now.Year(), now.Month(), now.Day()+7, 8, 0, 0, 0, time.Local),
 		),
-		task(
+		Task(
 			"Econ Assignment: Part 2 / 2",
 			PRIORITY_IMPORTANT,
 			90,
@@ -83,60 +63,58 @@ func aDay(now time.Time) []Event {
 	}
 }
 
-func bDay(now time.Time) []Event {
-	return []Event{
-			{
-				Name:     "AP Physics",
-				MinStart: time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
-				MaxEnd:   time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
-			},
-			{
-				Name:     "Philosophy in Literature (H)",
-				MinStart: time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
-				MaxEnd:   time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
-			},
-			{
-				Name:     "Data Structures and Algorithms (H)",
-				MinStart: time.Date(now.Year(), now.Month(), now.Day(), 11, 30, 0, 0, time.Local),
-				MaxEnd:   time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
-			},
-			{
-				Name:     "Lunch",
-				MinStart: time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
-				MaxEnd:   time.Date(now.Year(), now.Month(), now.Day(), 13, 05, 0, 0, time.Local),
-			},
-		}, []Task{
-			{
-				Name:     "DSA Assignment",
-				Duration: 120,
-				Deadline: time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
-				Priority: PRIORITY_IMPORTANT,
-			},
-			{
-				Name:     "Side Project 1 Deadline: Rewrite Part 1 / 3",
-				Duration: 60,
-				Deadline: time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
-				Priority: PRIORITY_UNIMPORTANT,
-			},
-			{
-				Name:     "Side Project 1 Deadline: Rewrite Part 2 / 3",
-				Duration: 60,
-				Deadline: time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
-				Priority: PRIORITY_UNIMPORTANT,
-			},
-			{
-				Name:     "Side Project 1 Deadline: Rewrite Part 3 / 3",
-				Duration: 60,
-				Deadline: time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
-				Priority: PRIORITY_UNIMPORTANT,
-			},
-		}
+func bDay(now time.Time) []Reservable {
+	return []Reservable{
+		Event(
+			"AP Physics",
+			time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day(), 9, 15, 0, 0, time.Local),
+		),
+		Event(
+			"Philosophy in Literature (H)",
+			time.Date(now.Year(), now.Month(), now.Day(), 9, 25, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day(), 10, 40, 0, 0, time.Local),
+		),
+		Event(
+			"Data Structures and Algorithms (H)",
+			time.Date(now.Year(), now.Month(), now.Day(), 11, 30, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
+		),
+		Event(
+			"Lunch",
+			time.Date(now.Year(), now.Month(), now.Day(), 12, 45, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day(), 13, 05, 0, 0, time.Local),
+		),
+		Task(
+			"DSA Assignment",
+			PRIORITY_IMPORTANT,
+			120,
+			time.Date(now.Year(), now.Month(), now.Day()+2, 8, 0, 0, 0, time.Local),
+		),
+		Task(
+			"Side Project 1 Deadline: Rewrite Part 1 / 3",
+			PRIORITY_UNIMPORTANT,
+			60,
+			time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
+		),
+		Task(
+			"Side Project 1 Deadline: Rewrite Part 2 / 3",
+			PRIORITY_UNIMPORTANT,
+			60,
+			time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
+		),
+		Task(
+			"Side Project 1 Deadline: Rewrite Part 3 / 3",
+			PRIORITY_UNIMPORTANT,
+			60,
+			time.Date(now.Year(), now.Month(), now.Day()+14, 8, 0, 0, 0, time.Local),
+		),
+	}
 }
 
 func typicalWeek() Input {
 	now := time.Now()
-	var events []Event
-	var tasks []Task
+	var reservables []Reservable
 
 	for i := range 7 {
 		sleepStart := time.Date(now.Year(), now.Month(), now.Day()+i-1, 21, 0, 0, 0, time.Local)
@@ -144,36 +122,33 @@ func typicalWeek() Input {
 			sleepStart = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 		}
 		sleepEnd := time.Date(now.Year(), now.Month(), now.Day()+i, 6, 30, 0, 0, time.Local)
-		events = append(events, Event{
-			Name:     "Sleep",
-			MinStart: sleepStart,
-			MaxEnd:   sleepEnd,
-		})
+		reservables = append(reservables, Event(
+			"Sleep",
+			sleepStart,
+			sleepEnd,
+		))
 
 		today := time.Date(now.Year(), now.Month(), now.Day()+i, 0, 0, 0, 0, time.Local)
-		var schoolEvents []Event
-		var schoolTasks []Task
+		var schoolReserve []Reservable
 		if i < 5 {
 			if i%2 == 0 {
-				schoolEvents, schoolTasks = aDay(today)
+				schoolReserve = aDay(today)
 			} else {
-				schoolEvents, schoolTasks = bDay(today)
+				schoolReserve = bDay(today)
 			}
 		}
-		events = append(events, schoolEvents...)
-		tasks = append(tasks, schoolTasks...)
+		reservables = append(reservables, schoolReserve...)
 
-		events = append(events, Event{
-			Name:     "Dinner",
-			MinStart: time.Date(now.Year(), now.Month(), now.Day()+i, 18, 0, 0, 0, time.Local),
-			MaxEnd:   time.Date(now.Year(), now.Month(), now.Day()+i, 18, 15, 0, 0, time.Local),
-		})
+		reservables = append(reservables, Event(
+			"Dinner",
+			time.Date(now.Year(), now.Month(), now.Day()+i, 18, 0, 0, 0, time.Local),
+			time.Date(now.Year(), now.Month(), now.Day()+i, 18, 15, 0, 0, time.Local),
+		))
 	}
 
 	return Input{
-		Now:    now,
-		Events: events,
-		Tasks:  tasks,
+		Now:         now,
+		Reservables: reservables,
 	}
 }
 
@@ -185,14 +160,8 @@ func TestSchedule(t *testing.T) {
 
 	renderedBlocks := make([]templates.TimeBlock, len(blocks))
 	for i, b := range blocks {
-		var name string
-		if b.Event != nil {
-			name = b.Event.Name
-		} else {
-			name = b.Task.Name
-		}
 		renderedBlocks[i] = templates.TimeBlock{
-			Name:  name,
+			Name:  b.Reservable.Name,
 			Start: b.Start,
 			End:   b.End,
 		}

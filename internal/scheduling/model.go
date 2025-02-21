@@ -14,8 +14,7 @@ const (
 	PRIORITY_MUST_EXIST
 )
 
-type Event struct {
-	Id       int
+type Reservable struct {
 	Name     string
 	Priority Priority
 	// Duration is in minutes.
@@ -23,7 +22,7 @@ type Event struct {
 	MinStart, MaxEnd time.Time
 }
 
-func (e Event) leeway() int {
+func (e Reservable) leeway() int {
 	return int(e.MaxEnd.Sub(e.MinStart).Minutes())
 }
 
@@ -37,7 +36,7 @@ func (b TimeBlock) Duration() time.Duration {
 
 type ScheduleBlock struct {
 	TimeBlock
-	EventId int
+	Reservable *Reservable
 }
 
 // Input assumes that:
@@ -45,18 +44,18 @@ type ScheduleBlock struct {
 //   - all the End times of Events are after Now.
 //   - all the Deadline times of Tasks are after Now.
 type Input struct {
-	Now    time.Time
-	Events []Event
+	Now         time.Time
+	Reservables []Reservable
 }
 
 func Schedule(input Input) ([]ScheduleBlock, []error) {
-	for i, e := range input.Events {
-		if e.MinStart.Before(input.Now) {
-			input.Events[i].MinStart = input.Now
+	for i, r := range input.Reservables {
+		if r.MinStart.Before(input.Now) {
+			input.Reservables[i].MinStart = input.Now
 		}
 	}
 
-	slices.SortFunc(input.Events, func(a, b Event) int {
+	slices.SortFunc(input.Reservables, func(a, b Reservable) int {
 		if a.Priority < b.Priority {
 			return -1
 		}
@@ -66,60 +65,65 @@ func Schedule(input Input) ([]ScheduleBlock, []error) {
 		return a.leeway() - b.leeway()
 	})
 
-	blocks := make([]ScheduleBlock, 0, len(input.Events))
-	for _, e := range input.Events {
-		if e.leeway() > 0 {
+	blocks := make([]ScheduleBlock, 0, len(input.Reservables))
+	for i, r := range input.Reservables {
+		if r.leeway() > 0 {
 			continue
 		}
 		blocks = append(blocks, ScheduleBlock{
 			TimeBlock: TimeBlock{
-				Start: e.MinStart,
-				End:   e.MaxEnd,
+				Start: r.MinStart,
+				End:   r.MaxEnd,
 			},
-			EventId: e.Id,
+			Reservable: &input.Reservables[i],
 		})
 	}
 
 	cursor := input.Now
 	var freeTime []TimeBlock
-	for _, e := range input.Events {
-		if e.leeway() > 0 {
+	for _, r := range input.Reservables {
+		if r.leeway() > 0 {
 			continue
 		}
-		freeMins := int(e.MinStart.Sub(cursor).Minutes())
+		freeMins := int(r.MinStart.Sub(cursor).Minutes())
 		if freeMins > 0 {
 			freeTime = append(freeTime, TimeBlock{
 				Start: cursor,
-				End:   e.MinStart,
+				End:   r.MinStart,
 			})
 		}
-		cursor = e.MaxEnd
+		cursor = r.MaxEnd
 	}
+	freeTime = append(freeTime, TimeBlock{
+		Start: cursor,
+		// this is the maximum unix time
+		End: time.Unix(1<<63-62135596801, 999999999),
+	})
 
 	var errors []error
-	for _, e := range input.Events {
+	for ri, r := range input.Reservables {
 		// add inbetween the calendar events (where there is free space)
 		for i, free := range freeTime {
 			start := free.Start
-			if free.Start.Before(e.MinStart) {
-				start = e.MinStart
+			if free.Start.Before(r.MinStart) {
+				start = r.MinStart
 			}
 			freeMins := int(free.End.Sub(start))
-			if freeMins < e.Duration {
+			if freeMins < r.Duration {
 				continue
 			}
 
-			end := start.Add(time.Duration(e.Duration) * time.Minute)
+			end := start.Add(time.Duration(r.Duration) * time.Minute)
 			blocks = append(blocks, ScheduleBlock{
 				TimeBlock: TimeBlock{
 					Start: start,
 					End:   end,
 				},
-				EventId: e.Id,
+				Reservable: &input.Reservables[ri],
 			})
 
-			if e.MaxEnd.Before(end) {
-				errors = append(errors, fmt.Errorf("'%s' was scheduled after its deadline", e.Name))
+			if r.MaxEnd.Before(end) {
+				errors = append(errors, fmt.Errorf("'%s' was scheduled after its deadline", r.Name))
 			}
 
 			freeTimeL := freeTime[:i]
@@ -150,4 +154,24 @@ func Schedule(input Input) ([]ScheduleBlock, []error) {
 	})
 
 	return blocks, errors
+}
+
+func Event(name string, start, end time.Time) Reservable {
+	return Reservable{
+		Name:     name,
+		Priority: PRIORITY_MUST_EXIST,
+		MinStart: start,
+		MaxEnd:   end,
+		Duration: int(end.Sub(start).Minutes()),
+	}
+}
+
+func Task(name string, priority Priority, duration int, deadline time.Time) Reservable {
+	return Reservable{
+		Name:     name,
+		Priority: priority,
+		MinStart: time.Time{},
+		MaxEnd:   deadline,
+		Duration: duration,
+	}
 }
