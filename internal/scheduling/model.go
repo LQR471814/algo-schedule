@@ -1,42 +1,40 @@
 package scheduling
 
 import (
+	"slices"
 	"time"
 )
 
-type Difficulty int
+type Priority int
 
 const (
-	DIFFICULTY_LOW Difficulty = iota
-	DIFFICULTY_MEDIUM
-	DIFFICULTY_HIGH
+	PRIORITY_UNIMPORTANT Priority = iota
+	PRIORITY_IMPORTANT
 )
 
 type Event struct {
+	Id         uint64
 	Name       string
 	Start, End time.Time
-	Difficulty Difficulty
-}
-
-type Quota struct {
-	Name       string
-	Duration   time.Duration
-	Difficulty Difficulty
 }
 
 type Task struct {
+	Id   uint64
 	Name string
-	// Size is an estimate of how long the task will take in minutes.
-	Size int
-	// Difficulty measures the decision making involved in this task.
-	Difficulty     Difficulty
-	TimeToDeadline time.Duration
+	// Duration is an estimate of how long the task will take in minutes.
+	Duration int
+	Priority Priority
+	Deadline time.Time
 }
 
+// Input assumes that:
+//
+//   - all the End times of Events are after Now.
+//   - all the Deadline times of Tasks are after Now.
 type Input struct {
-	Tasks  []Task
+	Now    time.Time
 	Events []Event
-	Quotas []Quota
+	Tasks  []Task
 }
 
 type TimeBlock struct {
@@ -45,14 +43,22 @@ type TimeBlock struct {
 }
 
 func Schedule(input Input) []TimeBlock {
-	blocks := make([]TimeBlock, len(input.Events))
+	var blocks []TimeBlock
 
+	slices.SortFunc(input.Tasks, func(a, b Task) int {
+		rA := a.Deadline.Sub(input.Now)
+		rB := b.Deadline.Sub(input.Now)
+		return int(rA.Seconds() - rB.Seconds())
+	})
+
+	var prevEnd time.Time
 	for i, e := range input.Events {
 		blocks[i] = TimeBlock{
 			Name:  e.Name,
 			Start: e.Start,
 			End:   e.End,
 		}
+		prevEnd = e.End
 	}
 
 }
