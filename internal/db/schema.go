@@ -11,11 +11,3 @@ const (
 	SIZE_SMALL = iota
 	SIZE_MEDIUM
 )
-
-type Challenge = int64
-
-const (
-	CHALLENGE_EASY Challenge = iota
-	CHALLENGE_MEDIUM
-	CHALLENGE_HARD
-)

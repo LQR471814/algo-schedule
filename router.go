@@ -2,6 +2,7 @@ package main
 
 import (
 	"algo-schedule/internal/db"
+	"algo-schedule/internal/scheduling"
 	"algo-schedule/internal/templates"
 	"fmt"
 	"net/http"
@@ -35,7 +36,19 @@ func (router Router) Root(w http.ResponseWriter, r *http.Request) {
 		writeError(500, err, w)
 		return
 	}
-	templates.Root(templates.Dashboard(tasks)).Render(ctx, w)
+
+	var reservables []scheduling.Reservable
+	for _, t := range tasks {
+		reservables = append(reservables, scheduling.Task(
+			t.Name,
+		))
+	}
+
+	scheduling.Input{
+		Now: time.Now(),
+	}
+
+	templates.Root(templates.Dashboard(time.Local, tasks)).Render(ctx, w)
 }
 
 func parseSize(text string) (db.Size, error) {
@@ -48,19 +61,7 @@ func parseSize(text string) (db.Size, error) {
 	return -1, fmt.Errorf("unknown size '%s'", text)
 }
 
-func parseChallenge(text string) (db.Challenge, error) {
-	switch text {
-	case "easy":
-		return db.CHALLENGE_EASY, nil
-	case "medium":
-		return db.CHALLENGE_MEDIUM, nil
-	case "hard":
-		return db.CHALLENGE_HARD, nil
-	}
-	return -1, fmt.Errorf("unknown challenge '%s'", text)
-}
-
-func parseTask(form url.Values) (name, description string, size db.Size, challenge db.Challenge, deadline time.Time, err error) {
+func parseTask(form url.Values) (name, description string, size db.Size, deadline time.Time, err error) {
 	name = form.Get("name")
 	if name == "" {
 		err = fmt.Errorf("required field: name")
@@ -70,11 +71,6 @@ func parseTask(form url.Values) (name, description string, size db.Size, challen
 	size, err = parseSize(form.Get("size"))
 	if err != nil {
 		err = fmt.Errorf("invalid size: %w", err)
-		return
-	}
-	challenge, err = parseChallenge(form.Get("challenge"))
-	if err != nil {
-		err = fmt.Errorf("invalid challenge: %w", err)
 		return
 	}
 	deadline, err = time.Parse(time.DateOnly, form.Get("deadline"))
@@ -108,7 +104,7 @@ func (router Router) CreateTask(w http.ResponseWriter, r *http.Request) {
 		writeError(400, fmt.Errorf("invalid form data: %w", err), w)
 		return
 	}
-	name, description, size, challenge, deadline, err := parseTask(r.Form)
+	name, description, size, deadline, err := parseTask(r.Form)
 	if err != nil {
 		writeError(400, err, w)
 		return
@@ -117,7 +113,6 @@ func (router Router) CreateTask(w http.ResponseWriter, r *http.Request) {
 	id, err := router.qry.CreateTask(r.Context(), db.CreateTaskParams{
 		Name:        name,
 		Size:        size,
-		Challenge:   challenge,
 		Deadline:    deadline,
 		Description: description,
 	})
@@ -130,7 +125,6 @@ func (router Router) CreateTask(w http.ResponseWriter, r *http.Request) {
 		ID:          id,
 		Name:        name,
 		Size:        size,
-		Challenge:   challenge,
 		Deadline:    deadline,
 		Description: description,
 	}).Render(ctx, w)
@@ -189,7 +183,7 @@ func (router Router) EndEditTask(w http.ResponseWriter, r *http.Request) {
 		writeError(400, fmt.Errorf("invalid form data: %w", err), w)
 		return
 	}
-	name, description, size, challenge, deadline, err := parseTask(r.Form)
+	name, description, size, deadline, err := parseTask(r.Form)
 	if err != nil {
 		writeError(400, err, w)
 		return
@@ -199,7 +193,6 @@ func (router Router) EndEditTask(w http.ResponseWriter, r *http.Request) {
 		ID:          id,
 		Name:        name,
 		Size:        size,
-		Challenge:   challenge,
 		Deadline:    deadline,
 		Description: description,
 	})

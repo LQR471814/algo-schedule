@@ -1,5 +1,5 @@
 -- name: CreateTask :one
-insert into task(name, description, deadline, size, challenge) values (?, ?, ?, ?, ?)
+insert into task(name, description, deadline, size, priority) values (?, ?, ?, ?, ?)
 returning id;
 
 -- name: ListTasks :many
@@ -17,7 +17,7 @@ update task set
     description = ?,
     deadline = ?,
     size = ?,
-    challenge = ?
+    priority = ?
 where id = ?;
 
 -- name: DeleteTask :exec
@@ -55,7 +55,7 @@ update project set deleted_at = null where id = ?;
 
 
 -- name: CreateProjectTask :one
-insert into project_task(project_id, name, description, size, challenge) values (?, ?, ?, ?, ?)
+insert into project_task(project_id, name, description, size) values (?, ?, ?, ?)
 returning id;
 
 -- name: ListProjectTasks :many
@@ -71,8 +71,7 @@ select * from project_task where id = ? and deleted_at is null;
 update project_task set
     name = ?,
     description = ?,
-    size = ?,
-    challenge = ?
+    size = ?
 where id = ?;
 
 -- name: DeleteProjectTask :exec

@@ -24,7 +24,6 @@ type ProjectTask struct {
 	Name        string
 	Description string
 	Size        int64
-	Challenge   int64
 }
 
 type Quotum struct {
@@ -48,5 +47,5 @@ type Task struct {
 	Description string
 	Deadline    time.Time
 	Size        int64
-	Challenge   int64
+	Priority    int64
 }

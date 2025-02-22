@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const taskGridClass = "grid grid-cols-[minmax(64px,300px)_minmax(min-content,150px)_minmax(min-content,240px)_64px] gap-1 items-start"
+const taskGridClass = "grid grid-cols-[minmax(64px,300px)_minmax(min-content,150px)_64px] gap-1 items-start"
 
 const nonEmptyValidate = `if (this.value === '') {
 	this.setCustomValidity('This field is required.')
@@ -121,16 +121,6 @@ templ Task(t db.Task) {
 					Medium
 			}
 		</div>
-		<div>
-			switch t.Challenge {
-				case db.CHALLENGE_EASY:
-					Easy
-				case db.CHALLENGE_MEDIUM:
-					Medium Difficulty
-				case db.CHALLENGE_HARD:
-					Hard
-			}
-		</div>
 		<div class="flex gap-2 justify-between">
 			<button hx-get={ fmt.Sprintf("/start_edit_task/%d", t.ID) }>
 				@IconEditLine("")
@@ -139,13 +129,13 @@ templ Task(t db.Task) {
 				@IconDeleteBinLine("")
 			</button>
 		</div>
-		<p class="col-span-2">
+		<p>
 			if t.Description == "" {
 				-
 			}
 			{ t.Description }
 		</p>
-		<div class="col-span-2">
+		<div>
 			{ t.Deadline.Format(time.DateOnly) } ({ formatDeadline(t.Deadline) })
 		</div>
 	</div>
@@ -195,37 +185,6 @@ templ EditTask(t db.Task) {
 				</option>
 			</select>
 		</div>
-		<div>
-			<select
-				name="challenge"
-				{ selectRequiredAttrs... }
-			>
-				<option
-					value="easy"
-					if t.Challenge == db.CHALLENGE_EASY {
-						selected
-					}
-				>
-					Easy
-				</option>
-				<option
-					value="medium"
-					if t.Challenge == db.CHALLENGE_MEDIUM {
-						selected
-					}
-				>
-					Medium Difficulty
-				</option>
-				<option
-					value="hard"
-					if t.Challenge == db.CHALLENGE_HARD {
-						selected
-					}
-				>
-					Hard
-				</option>
-			</select>
-		</div>
 		<div class="flex gap-2 justify-between">
 			<button type="submit">
 				@IconCheckLine("")
@@ -234,7 +193,7 @@ templ EditTask(t db.Task) {
 				@IconCloseLine("")
 			</button>
 		</div>
-		<div class="col-span-2">
+		<div>
 			<textarea
 				name="description"
 				rows="5"
@@ -244,7 +203,7 @@ templ EditTask(t db.Task) {
 				{ t.Description }
 			</textarea>
 		</div>
-		<div class="col-span-2">
+		<div>
 			<input
 				type="date"
 				name="deadline"
@@ -289,29 +248,10 @@ templ CreateTask() {
 				</option>
 			</select>
 		</div>
-		<div>
-			<select
-				name="challenge"
-				{ selectRequiredAttrs... }
-			>
-				<option value="">
-					-- Difficulty --
-				</option>
-				<option value="easy">
-					Easy
-				</option>
-				<option value="medium">
-					Medium Difficulty
-				</option>
-				<option value="hard">
-					Hard
-				</option>
-			</select>
-		</div>
 		<button type="submit">
 			@IconAddLine("")
 		</button>
-		<div class="col-span-2">
+		<div>
 			<textarea
 				name="description"
 				rows="5"
@@ -320,7 +260,7 @@ templ CreateTask() {
 				value=""
 			></textarea>
 		</div>
-		<div class="col-span-2">
+		<div>
 			<input
 				type="date"
 				name="deadline"

@@ -7,8 +7,8 @@ create table task (
     deadline timestamp not null,
     -- 0: small, 1: medium
     size integer not null check(size in (0, 1)),
-    -- 0: easy, 1: medium, 2: hard
-    challenge integer not null check(challenge in (0, 1, 2))
+    -- 0: unimportant, 1: important
+    priority integer not null check(size in (0, 1))
 );
 
 create table project (
@@ -29,8 +29,6 @@ create table project_task (
     description text not null,
     -- 0: small, 1: medium
     size integer not null check(size in (0, 1)),
-    -- 0: easy, 1: medium, 2: hard
-    challenge integer not null check(challenge in (0, 1, 2)),
 
     foreign key (project_id) references project(id)
 );

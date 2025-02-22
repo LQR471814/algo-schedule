@@ -29,7 +29,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (i
 }
 
 const createProjectTask = `-- name: CreateProjectTask :one
-insert into project_task(project_id, name, description, size, challenge) values (?, ?, ?, ?, ?)
+insert into project_task(project_id, name, description, size) values (?, ?, ?, ?)
 returning id
 `
 
@@ -38,7 +38,6 @@ type CreateProjectTaskParams struct {
 	Name        string
 	Description string
 	Size        int64
-	Challenge   int64
 }
 
 func (q *Queries) CreateProjectTask(ctx context.Context, arg CreateProjectTaskParams) (int64, error) {
@@ -47,7 +46,6 @@ func (q *Queries) CreateProjectTask(ctx context.Context, arg CreateProjectTaskPa
 		arg.Name,
 		arg.Description,
 		arg.Size,
-		arg.Challenge,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -73,7 +71,7 @@ func (q *Queries) CreateQuota(ctx context.Context, arg CreateQuotaParams) (int64
 }
 
 const createTask = `-- name: CreateTask :one
-insert into task(name, description, deadline, size, challenge) values (?, ?, ?, ?, ?)
+insert into task(name, description, deadline, size, priority) values (?, ?, ?, ?, ?)
 returning id
 `
 
@@ -82,7 +80,7 @@ type CreateTaskParams struct {
 	Description string
 	Deadline    time.Time
 	Size        int64
-	Challenge   int64
+	Priority    int64
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, error) {
@@ -91,7 +89,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, 
 		arg.Description,
 		arg.Deadline,
 		arg.Size,
-		arg.Challenge,
+		arg.Priority,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -135,7 +133,7 @@ func (q *Queries) DeleteTask(ctx context.Context, id int64) error {
 }
 
 const listDeletedProjectTasks = `-- name: ListDeletedProjectTasks :many
-select id, project_id, deleted_at, name, description, size, challenge from project_task where project_id = ? and deleted_at is not null
+select id, project_id, deleted_at, name, description, size from project_task where project_id = ? and deleted_at is not null
 `
 
 func (q *Queries) ListDeletedProjectTasks(ctx context.Context, projectID int64) ([]ProjectTask, error) {
@@ -154,7 +152,6 @@ func (q *Queries) ListDeletedProjectTasks(ctx context.Context, projectID int64) 
 			&i.Name,
 			&i.Description,
 			&i.Size,
-			&i.Challenge,
 		); err != nil {
 			return nil, err
 		}
@@ -237,7 +234,7 @@ func (q *Queries) ListDeletedQuotas(ctx context.Context) ([]Quotum, error) {
 }
 
 const listDeletedTasks = `-- name: ListDeletedTasks :many
-select id, deleted_at, name, description, deadline, size, challenge from task where deleted_at is not null
+select id, deleted_at, name, description, deadline, size, priority from task where deleted_at is not null
 `
 
 func (q *Queries) ListDeletedTasks(ctx context.Context) ([]Task, error) {
@@ -256,7 +253,7 @@ func (q *Queries) ListDeletedTasks(ctx context.Context) ([]Task, error) {
 			&i.Description,
 			&i.Deadline,
 			&i.Size,
-			&i.Challenge,
+			&i.Priority,
 		); err != nil {
 			return nil, err
 		}
@@ -272,7 +269,7 @@ func (q *Queries) ListDeletedTasks(ctx context.Context) ([]Task, error) {
 }
 
 const listProjectTasks = `-- name: ListProjectTasks :many
-select id, project_id, deleted_at, name, description, size, challenge from project_task where project_id = ? and deleted_at is null
+select id, project_id, deleted_at, name, description, size from project_task where project_id = ? and deleted_at is null
 `
 
 func (q *Queries) ListProjectTasks(ctx context.Context, projectID int64) ([]ProjectTask, error) {
@@ -291,7 +288,6 @@ func (q *Queries) ListProjectTasks(ctx context.Context, projectID int64) ([]Proj
 			&i.Name,
 			&i.Description,
 			&i.Size,
-			&i.Challenge,
 		); err != nil {
 			return nil, err
 		}
@@ -374,7 +370,7 @@ func (q *Queries) ListQuotas(ctx context.Context) ([]Quotum, error) {
 }
 
 const listTasks = `-- name: ListTasks :many
-select id, deleted_at, name, description, deadline, size, challenge from task where deleted_at is null
+select id, deleted_at, name, description, deadline, size, priority from task where deleted_at is null
 `
 
 func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
@@ -393,7 +389,7 @@ func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
 			&i.Description,
 			&i.Deadline,
 			&i.Size,
-			&i.Challenge,
+			&i.Priority,
 		); err != nil {
 			return nil, err
 		}
@@ -409,7 +405,7 @@ func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
 }
 
 const readProject = `-- name: ReadProject :one
-select id, deleted_at, name, description, deadline, size, challenge from task where id = ? and deleted_at is null
+select id, deleted_at, name, description, deadline, size, priority from task where id = ? and deleted_at is null
 `
 
 func (q *Queries) ReadProject(ctx context.Context, id int64) (Task, error) {
@@ -422,13 +418,13 @@ func (q *Queries) ReadProject(ctx context.Context, id int64) (Task, error) {
 		&i.Description,
 		&i.Deadline,
 		&i.Size,
-		&i.Challenge,
+		&i.Priority,
 	)
 	return i, err
 }
 
 const readProjectTask = `-- name: ReadProjectTask :one
-select id, project_id, deleted_at, name, description, size, challenge from project_task where id = ? and deleted_at is null
+select id, project_id, deleted_at, name, description, size from project_task where id = ? and deleted_at is null
 `
 
 func (q *Queries) ReadProjectTask(ctx context.Context, id int64) (ProjectTask, error) {
@@ -441,7 +437,6 @@ func (q *Queries) ReadProjectTask(ctx context.Context, id int64) (ProjectTask, e
 		&i.Name,
 		&i.Description,
 		&i.Size,
-		&i.Challenge,
 	)
 	return i, err
 }
@@ -465,7 +460,7 @@ func (q *Queries) ReadQuota(ctx context.Context, id int64) (Quotum, error) {
 }
 
 const readTask = `-- name: ReadTask :one
-select id, deleted_at, name, description, deadline, size, challenge from task where id = ? and deleted_at is null
+select id, deleted_at, name, description, deadline, size, priority from task where id = ? and deleted_at is null
 `
 
 func (q *Queries) ReadTask(ctx context.Context, id int64) (Task, error) {
@@ -478,7 +473,7 @@ func (q *Queries) ReadTask(ctx context.Context, id int64) (Task, error) {
 		&i.Description,
 		&i.Deadline,
 		&i.Size,
-		&i.Challenge,
+		&i.Priority,
 	)
 	return i, err
 }
@@ -548,8 +543,7 @@ const updateProjectTask = `-- name: UpdateProjectTask :exec
 update project_task set
     name = ?,
     description = ?,
-    size = ?,
-    challenge = ?
+    size = ?
 where id = ?
 `
 
@@ -557,7 +551,6 @@ type UpdateProjectTaskParams struct {
 	Name        string
 	Description string
 	Size        int64
-	Challenge   int64
 	ID          int64
 }
 
@@ -566,7 +559,6 @@ func (q *Queries) UpdateProjectTask(ctx context.Context, arg UpdateProjectTaskPa
 		arg.Name,
 		arg.Description,
 		arg.Size,
-		arg.Challenge,
 		arg.ID,
 	)
 	return err
@@ -614,7 +606,7 @@ update task set
     description = ?,
     deadline = ?,
     size = ?,
-    challenge = ?
+    priority = ?
 where id = ?
 `
 
@@ -623,7 +615,7 @@ type UpdateTaskParams struct {
 	Description string
 	Deadline    time.Time
 	Size        int64
-	Challenge   int64
+	Priority    int64
 	ID          int64
 }
 
@@ -633,7 +625,7 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) error {
 		arg.Description,
 		arg.Deadline,
 		arg.Size,
-		arg.Challenge,
+		arg.Priority,
 		arg.ID,
 	)
 	return err

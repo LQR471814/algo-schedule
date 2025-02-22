@@ -1,9 +1,15 @@
 package templates
 
-import "algo-schedule/internal/db"
+import (
+	"algo-schedule/internal/db"
+	"time"
+)
 
-templ Dashboard(tasks []db.Task) {
+templ Dashboard(tz *time.Location, tasks []db.Task, schedule []TimeBlock) {
 	<div class="grid gap-4 grid-cols-[fit-content_fit-content]">
 		@TaskList(tasks)
+		<div id="schedule">
+			@DayList(tz, schedule)
+		</div>
 	</div>
 }
